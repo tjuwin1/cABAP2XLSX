@@ -174,8 +174,6 @@ class zcl_excel_worksheet definition
         !is_table_settings      type zif_excel_data_decl=>zexcel_s_table_settings optional
         value(iv_default_descr) type c optional
         !iv_no_line_if_empty    type abap_bool default abap_false
-        !ip_conv_exit_length    type abap_bool default abap_false
-        !ip_conv_curr_amt_ext   type abap_bool default abap_false
       exporting
         !es_table_settings      type zif_excel_data_decl=>zexcel_s_table_settings
       raising
@@ -506,6 +504,8 @@ class zcl_excel_worksheet definition
         !ip_data_type         type zif_excel_data_decl=>zexcel_cell_data_type optional
         !ip_abap_type         type abap_typekind optional
         !ip_currency          type waers_curc optional
+        !ip_textvalue         type csequence optional
+        !ip_unitofmeasure     type meins optional
         !it_rtf               type zif_excel_data_decl=>zexcel_t_rtf optional
         !ip_column_formula_id type mty_s_column_formula-id optional
         !ip_conv_exit_length  type abap_bool default abap_false
@@ -999,7 +999,8 @@ class zcl_excel_worksheet implementation.
     constants:
       lc_top_left_column type zif_excel_data_decl=>zexcel_cell_column_alpha value 'A',
       lc_top_left_row    type zif_excel_data_decl=>zexcel_cell_row value 1,
-      lc_no_currency     type waers_curc value is initial.
+      lc_no_currency     type waers value is initial,
+      lc_no_unit         type meins value is initial.
 
     data:
       lv_row_int              type zif_excel_data_decl=>zexcel_cell_row,
@@ -1026,7 +1027,9 @@ class zcl_excel_worksheet implementation.
       <ls_field_catalog_custom> type zif_excel_data_decl=>zexcel_s_fieldcatalog,
       <fs_table_line>           type any,
       <fs_fldval>               type any,
-      <fs_fldval_currency>      type waers.
+      <fs_fldval_currency>      type waers,
+      <fs_fldval_uom>           type meins,
+      <fs_fldval_text>          type string.
 
     ls_settings = is_table_settings.
 
@@ -1043,8 +1046,7 @@ class zcl_excel_worksheet implementation.
     endif.
 
     if it_field_catalog is not supplied.
-      lt_field_catalog = zcl_excel_common=>get_fieldcatalog( ip_table = ip_table
-                                                             ip_conv_exit_length = ip_conv_exit_length ).
+      lt_field_catalog = zcl_excel_common=>get_fieldcatalog( ip_table = ip_table ).
     else.
       lt_field_catalog = it_field_catalog.
     endif.
@@ -1088,7 +1090,7 @@ class zcl_excel_worksheet implementation.
           it_field_catalog = lt_field_catalog ).
 
 * It is better to loop column by column (only visible column)
-    loop at lt_field_catalog assigning <ls_field_catalog> where dynpfld eq abap_true.
+    loop at lt_field_catalog assigning <ls_field_catalog>.
 
       lv_column_alpha = zcl_excel_common=>convert_column2alpha( lv_column_int ).
 
@@ -1181,10 +1183,20 @@ class zcl_excel_worksheet implementation.
                           ip_column_formula_id = ls_column_formula-id ).
           endif.
         else.
-          if <ls_field_catalog>-currency_column is initial or ip_conv_curr_amt_ext = abap_false.
+          if <ls_field_catalog>-currency_column is initial.
             assign lc_no_currency to <fs_fldval_currency>.
           else.
             assign component <ls_field_catalog>-currency_column of structure <fs_table_line> to <fs_fldval_currency>.
+          endif.
+          if <ls_field_catalog>-unit_column is initial.
+            assign lc_no_unit to <fs_fldval_uom>.
+          else.
+            assign component <ls_field_catalog>-unit_column of structure <fs_table_line> to <fs_fldval_uom>.
+          endif.
+          if <ls_field_catalog>-text_column is initial.
+            assign `` to <fs_fldval_text>.
+          else.
+            assign component <ls_field_catalog>-text_column of structure <fs_table_line> to <fs_fldval_text>.
           endif.
 
           if <ls_field_catalog>-style is not initial.
@@ -1194,15 +1206,17 @@ class zcl_excel_worksheet implementation.
                             ip_value            = <fs_fldval>
                             ip_abap_type        = <ls_field_catalog>-abap_type
                             ip_currency         = <fs_fldval_currency>
-                            ip_style            = <ls_field_catalog>-style
-                            ip_conv_exit_length = ip_conv_exit_length ).
+                            ip_unitofmeasure = <fs_fldval_uom>
+                            ip_textvalue     = <fs_fldval_text>
+                            ip_style            = <ls_field_catalog>-style ).
             else.
               me->set_cell( ip_column = lv_column_alpha
                             ip_row    = lv_row_int
                             ip_value  = <fs_fldval>
                             ip_currency = <fs_fldval_currency>
-                            ip_style  = <ls_field_catalog>-style
-                            ip_conv_exit_length = ip_conv_exit_length ).
+                            ip_unitofmeasure = <fs_fldval_uom>
+                            ip_textvalue     = <fs_fldval_text>
+                            ip_style  = <ls_field_catalog>-style ).
             endif.
           else.
             if <ls_field_catalog>-abap_type is not initial.
@@ -1210,14 +1224,16 @@ class zcl_excel_worksheet implementation.
                           ip_row    = lv_row_int
                           ip_abap_type = <ls_field_catalog>-abap_type
                           ip_currency  = <fs_fldval_currency>
-                          ip_value  = <fs_fldval>
-                          ip_conv_exit_length = ip_conv_exit_length ).
+                            ip_unitofmeasure = <fs_fldval_uom>
+                            ip_textvalue     = <fs_fldval_text>
+                          ip_value  = <fs_fldval> ).
             else.
               me->set_cell( ip_column = lv_column_alpha
                             ip_row    = lv_row_int
                             ip_currency = <fs_fldval_currency>
-                            ip_value  = <fs_fldval>
-                            ip_conv_exit_length = ip_conv_exit_length ).
+                            ip_unitofmeasure = <fs_fldval_uom>
+                            ip_textvalue     = <fs_fldval_text>
+                            ip_value  = <fs_fldval> ).
             endif.
           endif.
         endif.
@@ -1228,7 +1244,7 @@ class zcl_excel_worksheet implementation.
         me->set_cell( ip_column = lv_column_alpha
                       ip_row    = lv_row_int
                       ip_value  = space ).
-        add 1 to lv_row_int.
+        lv_row_int += 1.
       endif.
 
 *--------------------------------------------------------------------*
@@ -1249,7 +1265,7 @@ class zcl_excel_worksheet implementation.
       endif.
 
       lv_row_int = ls_settings-top_left_row.
-      add 1 to lv_column_int.
+      lv_column_int += 1.
 
 *--------------------------------------------------------------------*
       " conditional formatting
@@ -1492,7 +1508,6 @@ class zcl_excel_worksheet implementation.
 
     "Get the number of columns for the current table
     lt_columns = it_field_catalog.
-    delete lt_columns where dynpfld ne abap_true.
     lv_columns = lines( lt_columns ).
 
     "Calculate the top left row of the current table
@@ -3231,7 +3246,7 @@ class zcl_excel_worksheet implementation.
 
     try.
         lo_addit            ?= cl_abap_typedescr=>describe_by_data( ip_value ).
-        ep_value_type = lo_addit->kind.
+        ep_value_type = lo_addit->type_kind.
       catch cx_sy_move_cast_error.
         clear lo_addit.
     endtry.
@@ -3290,85 +3305,70 @@ class zcl_excel_worksheet implementation.
 
 
   method normalize_column_heading_texts.
-    "@TODO:Commented by Juwin
-*    DATA: lt_field_catalog      type zif_excel_data_decl=>zexcel_t_fieldcatalog,
-*          lv_value_lowercase    TYPE string,
-*          lv_scrtext_l_initial  type zif_excel_data_decl=>zexcel_column_name,
-*          lv_long_text          TYPE string,
-*          lv_max_length         TYPE i,
-*          lv_temp_length        TYPE i,
-*          lv_syindex            TYPE c LENGTH 3,
-*          lt_column_name_buffer TYPE SORTED TABLE OF string WITH UNIQUE KEY table_line.
-*    FIELD-SYMBOLS: <ls_field_catalog> type zif_excel_data_decl=>zexcel_s_fieldcatalog,
-*                   <scrtxt1>          TYPE any,
-*                   <scrtxt2>          TYPE any,
-*                   <scrtxt3>          TYPE any.
-*
-*    " Due to restrictions in new table object we cannot have two columns with the same name
-*    " Check if a column with the same name exists, if exists add a counter
-*    " If no medium description is provided we try to use small or long
-*
-*    lt_field_catalog = it_field_catalog.
-*
-*    LOOP AT lt_field_catalog ASSIGNING <ls_field_catalog> WHERE dynpfld EQ abap_true.
-*
-*      IF <ls_field_catalog>-column_name IS INITIAL.
-*
-*        CASE iv_default_descr.
-*          WHEN 'M'.
-*            ASSIGN <ls_field_catalog>-scrtext_m TO <scrtxt1>.
-*            ASSIGN <ls_field_catalog>-scrtext_s TO <scrtxt2>.
-*            ASSIGN <ls_field_catalog>-scrtext_l TO <scrtxt3>.
-*          WHEN 'S'.
-*            ASSIGN <ls_field_catalog>-scrtext_s TO <scrtxt1>.
-*            ASSIGN <ls_field_catalog>-scrtext_m TO <scrtxt2>.
-*            ASSIGN <ls_field_catalog>-scrtext_l TO <scrtxt3>.
-*          WHEN 'L'.
-*            ASSIGN <ls_field_catalog>-scrtext_l TO <scrtxt1>.
-*            ASSIGN <ls_field_catalog>-scrtext_m TO <scrtxt2>.
-*            ASSIGN <ls_field_catalog>-scrtext_s TO <scrtxt3>.
-*          WHEN OTHERS.
-*            ASSIGN <ls_field_catalog>-scrtext_m TO <scrtxt1>.
-*            ASSIGN <ls_field_catalog>-scrtext_s TO <scrtxt2>.
-*            ASSIGN <ls_field_catalog>-scrtext_l TO <scrtxt3>.
-*        ENDCASE.
-*
-*        IF <scrtxt1> IS NOT INITIAL.
-*          <ls_field_catalog>-column_name = <scrtxt1>.
-*        ELSEIF <scrtxt2> IS NOT INITIAL.
-*          <ls_field_catalog>-column_name = <scrtxt2>.
-*        ELSEIF <scrtxt3> IS NOT INITIAL.
-*          <ls_field_catalog>-column_name = <scrtxt3>.
-*        ELSE.
-*          <ls_field_catalog>-column_name = 'Column'.  " default value as Excel does
-*        ENDIF.
-*      ENDIF.
-*
-*      lv_scrtext_l_initial = <ls_field_catalog>-column_name.
-*      DESCRIBE FIELD <ls_field_catalog>-column_name LENGTH lv_max_length IN CHARACTER MODE.
-*      DO.
-*        lv_value_lowercase = <ls_field_catalog>-column_name.
-*        TRANSLATE lv_value_lowercase TO LOWER CASE.
-*        READ TABLE lt_column_name_buffer TRANSPORTING NO FIELDS WITH KEY table_line = lv_value_lowercase BINARY SEARCH.
-*        IF sy-subrc <> 0.
-*          INSERT lv_value_lowercase INTO TABLE lt_column_name_buffer.
-*          EXIT.
-*        ELSE.
-*          lv_syindex = sy-index.
-*          CONCATENATE lv_scrtext_l_initial lv_syindex INTO lv_long_text.
-*          IF strlen( lv_long_text ) <= lv_max_length.
-*            <ls_field_catalog>-column_name = lv_long_text.
-*          ELSE.
-*            lv_temp_length = strlen( lv_scrtext_l_initial ) - 1.
-*            lv_scrtext_l_initial = substring( val = lv_scrtext_l_initial len = lv_temp_length ).
-*            CONCATENATE lv_scrtext_l_initial lv_syindex INTO <ls_field_catalog>-column_name.
-*          ENDIF.
-*        ENDIF.
-*      ENDDO.
-*
-*    ENDLOOP.
-*
-*    result = lt_field_catalog.
+    data: lt_field_catalog      type zif_excel_data_decl=>zexcel_t_fieldcatalog,
+          lv_value_lowercase    type string,
+          lv_scrtext_l_initial  type zif_excel_data_decl=>zexcel_column_name,
+          lv_long_text          type string,
+          lv_max_length         type i,
+          lv_temp_length        type i,
+          lv_syindex            type c length 3,
+          lt_column_name_buffer type sorted table of string with unique key table_line.
+    field-symbols: <ls_field_catalog> type zif_excel_data_decl=>zexcel_s_fieldcatalog,
+                   <scrtxt3>          type any.
+
+    " Due to restrictions in new table object we cannot have two columns with the same name
+    " Check if a column with the same name exists, if exists add a counter
+    " If no medium description is provided we try to use small or long
+
+    lt_field_catalog = it_field_catalog.
+
+    loop at lt_field_catalog assigning <ls_field_catalog>.
+
+      if <ls_field_catalog>-column_name is initial.
+
+        case iv_default_descr.
+          when 'M'.
+            assign <ls_field_catalog>-scrtext_l to <scrtxt3>.
+          when 'S'.
+            assign <ls_field_catalog>-scrtext_l to <scrtxt3>.
+          when 'L'.
+            assign <ls_field_catalog>-scrtext_l to <scrtxt3>.
+          when others.
+            assign <ls_field_catalog>-scrtext_l to <scrtxt3>.
+        endcase.
+
+        if <scrtxt3> is not initial.
+          <ls_field_catalog>-column_name = <scrtxt3>.
+        else.
+          <ls_field_catalog>-column_name = 'Column'.  " default value as Excel does
+        endif.
+      endif.
+
+      lv_scrtext_l_initial = <ls_field_catalog>-column_name.
+      lv_max_length = strlen( conv string( <ls_field_catalog>-column_name ) ).
+      do.
+        lv_value_lowercase = <ls_field_catalog>-column_name.
+        translate lv_value_lowercase to lower case.
+        read table lt_column_name_buffer transporting no fields with key table_line = lv_value_lowercase binary search.
+        if sy-subrc <> 0.
+          insert lv_value_lowercase into table lt_column_name_buffer.
+          exit.
+        else.
+          lv_syindex = sy-index.
+          concatenate lv_scrtext_l_initial lv_syindex into lv_long_text.
+          if strlen( lv_long_text ) <= lv_max_length.
+            <ls_field_catalog>-column_name = lv_long_text.
+          else.
+            lv_temp_length = strlen( lv_scrtext_l_initial ) - 1.
+            lv_scrtext_l_initial = substring( val = lv_scrtext_l_initial len = lv_temp_length ).
+            concatenate lv_scrtext_l_initial lv_syindex into <ls_field_catalog>-column_name.
+          endif.
+        endif.
+      enddo.
+
+    endloop.
+
+    result = lt_field_catalog.
 
   endmethod.
 
@@ -3464,10 +3464,10 @@ class zcl_excel_worksheet implementation.
     if lo_style_type->type_kind = lo_style_type->typekind_oref.
       assign ip_style_or_guid to <style>.
       rv_guid = <style>->get_guid( ).
-    elseif lo_style_type->type_kind = lo_style_type->typekind_hex.
+    elseif lo_style_type->type_kind = lo_style_type->typekind_hex or lo_style_type->type_kind = lo_style_type->typekind_xstring.
       rv_guid = ip_style_or_guid.
     else.
-      raise exception type zcx_excel exporting error = 'IP_GUID type must be either REF TO zcl_excel_style or zexcel_cell_style'.
+      raise exception type zcx_excel exporting error = 'IP_GUID type must be either REF TO zcl_excel_style or a HEX value'.
     endif.
 
   endmethod.
@@ -3800,34 +3800,33 @@ class zcl_excel_worksheet implementation.
     endif.
   endmethod.                    "SET_AREA_STYLE
 
-
   method set_cell.
+    data lv_column        type zif_excel_data_decl=>zexcel_cell_column.
+    data ls_sheet_content type zif_excel_data_decl=>zexcel_s_cell_data.
+    data lv_row           type zif_excel_data_decl=>zexcel_cell_row.
+    data lv_value         type zif_excel_data_decl=>zexcel_cell_value.
+    data lv_data_type     type zif_excel_data_decl=>zexcel_cell_data_type.
+    data lv_value_type    type abap_typekind.
+    data lv_style_guid    type zif_excel_data_decl=>zexcel_cell_style.
+    data lo_addit         type ref to cl_abap_elemdescr.
+    data lo_type          type ref to cl_abap_datadescr.
+    data lt_rtf           type zif_excel_data_decl=>zexcel_t_rtf.
+    data lo_value         type ref to data.
+    data lo_value_new     type ref to data.
+    data lv_newformat type zif_excel_data_decl=>zexcel_number_format.
+    field-symbols <fs_sheet_content>  type zif_excel_data_decl=>zexcel_s_cell_data.
+    field-symbols <fs_numeric>        type numeric.
+    field-symbols <fs_date>           type d.
+    field-symbols <fs_time>           type t.
+    field-symbols <fs_value>          type simple.
+    field-symbols <fs_typekind_int8>  type abap_typekind.
+    field-symbols <fs_column_formula> type mty_s_column_formula.
+    field-symbols <ls_fieldcat>       type zif_excel_data_decl=>zexcel_s_fieldcatalog.
+    field-symbols <lv_utclong>        type simple.
 
-    data: lv_column        type zif_excel_data_decl=>zexcel_cell_column,
-          ls_sheet_content type zif_excel_data_decl=>zexcel_s_cell_data,
-          lv_row           type zif_excel_data_decl=>zexcel_cell_row,
-          lv_value         type zif_excel_data_decl=>zexcel_cell_value,
-          lv_data_type     type zif_excel_data_decl=>zexcel_cell_data_type,
-          lv_value_type    type abap_typekind,
-          lv_style_guid    type zif_excel_data_decl=>zexcel_cell_style,
-          lo_addit         type ref to cl_abap_elemdescr,
-          lt_rtf           type zif_excel_data_decl=>zexcel_t_rtf,
-          lo_value         type ref to data,
-          lo_value_new     type ref to data.
-
-    field-symbols: <fs_sheet_content> type zif_excel_data_decl=>zexcel_s_cell_data,
-                   <fs_numeric>       type numeric,
-                   <fs_date>          type d,
-                   <fs_time>          type t,
-                   <fs_value>         type simple,
-                   <fs_typekind_int8> type abap_typekind.
-    field-symbols: <fs_column_formula> type mty_s_column_formula.
-    field-symbols: <ls_fieldcat>       type zif_excel_data_decl=>zexcel_s_fieldcatalog.
-    field-symbols <lv_utclong>         type simple.
-
-    if ip_value  is not supplied
-        and ip_formula is not supplied
-        and ip_column_formula_id = 0.
+    if     ip_value             is not supplied
+       and ip_formula           is not supplied
+       and ip_column_formula_id  = 0.
       zcx_excel=>raise_text( 'Please provide the value or formula' ).
     endif.
 
@@ -3837,18 +3836,17 @@ class zcl_excel_worksheet implementation.
                                    importing ep_column    = lv_column
                                              ep_row       = lv_row ).
 
-* Begin of change issue #152 - don't touch exisiting style if only value is passed
+    " Begin of change issue #152 - don't touch existing style if only value is passed
     if ip_column_formula_id <> 0.
-      check_cell_column_formula(
-          it_column_formulas   = column_formulas
-          ip_column_formula_id = ip_column_formula_id
-          ip_formula           = ip_formula
-          ip_value             = ip_value
-          ip_row               = lv_row
-          ip_column            = lv_column ).
+      check_cell_column_formula( it_column_formulas   = column_formulas
+                                 ip_column_formula_id = ip_column_formula_id
+                                 ip_formula           = ip_formula
+                                 ip_value             = ip_value
+                                 ip_row               = lv_row
+                                 ip_column            = lv_column ).
     endif.
-    read table sheet_content assigning <fs_sheet_content> with table key cell_row    = lv_row      " Changed to access via table key , Stefan Schmöcker, 2013-08-03
-                                                                         cell_column = lv_column.
+    assign sheet_content[ cell_row    = lv_row      " Changed to access via table key , Stefan Schmöcker, 2013-08-03
+                          cell_column = lv_column ] to <fs_sheet_content>.
     if sy-subrc = 0.
       if ip_style is initial.
         " If no style is provided as method-parameter and cell is found use cell's current style
@@ -3861,23 +3859,32 @@ class zcl_excel_worksheet implementation.
       " No cell found --> use supplied style even if empty
       lv_style_guid = normalize_style_parameter( ip_style ).
     endif.
-* End of change issue #152 - don't touch exisiting style if only value is passed
+    " End of change issue #152 - don't touch existing style if only value is passed
 
-    if ip_value is supplied.
-      "if data type is passed just write the value. Otherwise map abap type to excel and perform conversion
-      "IP_DATA_TYPE is passed by excel reader so source types are preserved
-*First we get reference into local var.
-      if ip_conv_exit_length = abap_true.
-        lo_value = create_data_conv_exit_length( ip_value ).
-      else.
-        create data lo_value like ip_value.
-      endif.
-      assign lo_value->* to <fs_value>.
+    if ip_value is not supplied.
+      return.
+    endif.
+
+    " if data type is passed just write the value. Otherwise map abap type to excel and perform conversion
+    " IP_DATA_TYPE is passed by excel reader so source types are preserved
+    " First we get reference into local var.
+    if ip_conv_exit_length = abap_true.
+      lo_value = create_data_conv_exit_length( ip_value ).
+    else.
+      lo_type ?= cl_abap_datadescr=>describe_by_data( ip_value ).
+      try.
+          create data lo_value type handle lo_type.
+        catch cx_sy_create_data_error.
+          create data lo_value type string.
+      endtry.
+    endif.
+    assign lo_value->* to <fs_value>.
+    if sy-subrc = 0.
       <fs_value> = ip_value.
       if ip_data_type is supplied.
         if ip_abap_type is not supplied.
-          get_value_type( exporting ip_value      = ip_value
-                          importing ep_value      = <fs_value> ) .
+          get_value_type( exporting ip_value = ip_value
+                          importing ep_value = <fs_value> ).
         endif.
         lv_value = <fs_value>.
         lv_data_type = ip_data_type.
@@ -3892,14 +3899,16 @@ class zcl_excel_worksheet implementation.
 
         assign ('CL_ABAP_TYPEDESCR=>TYPEKIND_INT8') to <fs_typekind_int8>.
         if sy-subrc <> 0.
-          assign space to <fs_typekind_int8>. "not used as typekind!
+          assign space to <fs_typekind_int8>. " not used as typekind!
         endif.
 
         case lv_value_type.
           when cl_abap_typedescr=>typekind_int or cl_abap_typedescr=>typekind_int1 or cl_abap_typedescr=>typekind_int2
-            or <fs_typekind_int8>. "Allow INT8 types columns
+            or <fs_typekind_int8>. " Allow INT8 types columns
             if lv_value_type = <fs_typekind_int8>.
-              call method cl_abap_elemdescr=>('GET_INT8') receiving p_result = lo_addit.
+              call method cl_abap_elemdescr=>('GET_INT8')
+                receiving
+                  p_result = lo_addit.
             else.
               lo_addit = cl_abap_elemdescr=>get_i( ).
             endif.
@@ -3914,10 +3923,14 @@ class zcl_excel_worksheet implementation.
                cl_abap_typedescr=>typekind_decfloat or
                cl_abap_typedescr=>typekind_decfloat16 or
                cl_abap_typedescr=>typekind_decfloat34.
-            if lv_value_type = cl_abap_typedescr=>typekind_packed
-                and ip_currency is not initial.
+            if     lv_value_type  = cl_abap_typedescr=>typekind_packed
+               and ip_currency   is not initial.
               lv_value = zcl_excel_common=>number_to_excel_string( ip_value    = <fs_value>
                                                                    ip_currency = ip_currency ).
+            elseif     lv_value_type     = cl_abap_typedescr=>typekind_packed
+                   and ip_unitofmeasure is not initial.
+              lv_value = zcl_excel_common=>number_to_excel_string( ip_value         = <fs_value>
+                                                                   ip_unitofmeasure = ip_unitofmeasure ).
             else.
               lo_addit = cl_abap_elemdescr=>get_f( ).
               create data lo_value_new type handle lo_addit.
@@ -3939,16 +3952,16 @@ class zcl_excel_worksheet implementation.
             assign lo_value_new->* to <fs_date>.
             if sy-subrc = 0.
               <fs_date> = <fs_value>.
-              lv_value = zcl_excel_common=>date_to_excel_string( ip_value = <fs_date> ) .
+              lv_value = zcl_excel_common=>date_to_excel_string( ip_value = <fs_date> ).
             endif.
-* Begin of change issue #152 - don't touch exisiting style if only value is passed
+* Begin of change issue #152 - don't touch existing style if only value is passed
 * Moved to end of routine - apply date-format even if other styleinformation is passed
 *          IF ip_style IS NOT SUPPLIED. "get default date format in case parameter is initial
 *            lo_style = excel->add_new_style( ).
 *            lo_style->number_format->format_code = get_default_excel_date_format( ).
 *            lv_style_guid = lo_style->get_guid( ).
 *          ENDIF.
-* End of change issue #152 - don't touch exisiting style if only value is passed
+* End of change issue #152 - don't touch existing style if only value is passed
 
           when cl_abap_typedescr=>typekind_time.
             lo_addit = cl_abap_elemdescr=>get_t( ).
@@ -3958,14 +3971,14 @@ class zcl_excel_worksheet implementation.
               <fs_time> = <fs_value>.
               lv_value = zcl_excel_common=>time_to_excel_string( ip_value = <fs_time> ).
             endif.
-* Begin of change issue #152 - don't touch exisiting style if only value is passed
+* Begin of change issue #152 - don't touch existing style if only value is passed
 * Moved to end of routine - apply time-format even if other styleinformation is passed
 *          IF ip_style IS NOT SUPPLIED. "get default time format for user in case parameter is initial
 *            lo_style = excel->add_new_style( ).
 *            lo_style->number_format->format_code = zcl_excel_style_number_format=>c_format_date_time6.
 *            lv_style_guid = lo_style->get_guid( ).
 *          ENDIF.
-* End of change issue #152 - don't touch exisiting style if only value is passed
+* End of change issue #152 - don't touch existing style if only value is passed
 
           when typekind_utclong.
             assign variable_utclong->* to <lv_utclong>.
@@ -3980,7 +3993,7 @@ class zcl_excel_worksheet implementation.
       endif.
 
       if <fs_sheet_content> is assigned and <fs_sheet_content>-table_header is not initial and lv_value is not initial.
-        read table <fs_sheet_content>-table->fieldcat assigning <ls_fieldcat> with key fieldname = <fs_sheet_content>-table_fieldname.
+        assign <fs_sheet_content>-table->fieldcat[ fieldname = <fs_sheet_content>-table_fieldname ] to <ls_fieldcat>.
         if sy-subrc = 0.
           <ls_fieldcat>-column_name = lv_value.
           if <ls_fieldcat>-column_name <> lv_value.
@@ -3993,8 +4006,8 @@ class zcl_excel_worksheet implementation.
 
     if ip_hyperlink is bound.
       ip_hyperlink->set_cell_reference( ip_column = lv_column
-                                        ip_row = lv_row ).
-      me->hyperlinks->add( ip_hyperlink ).
+                                        ip_row    = lv_row ).
+      hyperlinks->add( ip_hyperlink ).
     endif.
 
     if lv_value cs '_x'.
@@ -4008,26 +4021,31 @@ class zcl_excel_worksheet implementation.
       replace all occurrences of regex '_(x[0-9a-fA-F]{4}_)' in lv_value with '_x005f_$1' respecting case.
     endif.
 
-* Begin of change issue #152 - don't touch exisiting style if only value is passed
-* Read table moved up, so that current style may be evaluated
+    " Begin of change issue #152 - don't touch existing style if only value is passed
+    " Read table moved up, so that current style may be evaluated
+
+    if ip_textvalue is not initial.
+      lv_value = |{ lv_value } ({ ip_textvalue })|.
+    endif.
 
     if <fs_sheet_content> is assigned.
-* End of change issue #152 - don't touch exisiting style if only value is passed
-      <fs_sheet_content>-cell_value   = lv_value.
-      <fs_sheet_content>-cell_formula = ip_formula.
+      " End of change issue #152 - don't touch existing style if only value is passed
+      <fs_sheet_content>-cell_value        = lv_value.
+      <fs_sheet_content>-cell_formula      = ip_formula.
       <fs_sheet_content>-column_formula_id = ip_column_formula_id.
-      <fs_sheet_content>-cell_style   = lv_style_guid.
-      <fs_sheet_content>-data_type    = lv_data_type.
+      <fs_sheet_content>-cell_style        = lv_style_guid.
+      <fs_sheet_content>-data_type         = lv_data_type.
     else.
-      ls_sheet_content-cell_row     = lv_row.
-      ls_sheet_content-cell_column  = lv_column.
-      ls_sheet_content-cell_value   = lv_value.
-      ls_sheet_content-cell_formula = ip_formula.
+      ls_sheet_content-cell_row          = lv_row.
+      ls_sheet_content-cell_column       = lv_column.
+      ls_sheet_content-cell_value        = lv_value.
+      ls_sheet_content-cell_formula      = ip_formula.
       ls_sheet_content-column_formula_id = ip_column_formula_id.
-      ls_sheet_content-cell_style   = lv_style_guid.
-      ls_sheet_content-data_type    = lv_data_type.
-      ls_sheet_content-cell_coords  = zcl_excel_common=>convert_column_a_row2columnrow( i_column = lv_column i_row = lv_row ).
-      insert ls_sheet_content into table sheet_content assigning <fs_sheet_content>. "ins #152 - Now <fs_sheet_content> always holds the data
+      ls_sheet_content-cell_style        = lv_style_guid.
+      ls_sheet_content-data_type         = lv_data_type.
+      ls_sheet_content-cell_coords       = zcl_excel_common=>convert_column_a_row2columnrow( i_column = lv_column
+                                                                                             i_row    = lv_row ).
+      insert ls_sheet_content into table sheet_content assigning <fs_sheet_content>. " ins #152 - Now <fs_sheet_content> always holds the data
 
     endif.
 
@@ -4039,74 +4057,94 @@ class zcl_excel_worksheet implementation.
       <fs_sheet_content>-rtf_tab = lt_rtf.
     endif.
 
-* Begin of change issue #152 - don't touch exisiting style if only value is passed
-* For Date- or Timefields change the formatcode if nothing is set yet
-* Enhancement option:  Check if existing formatcode is a date/ or timeformat
-*                      If not, use default
-    data: lo_format_code_datetime type zif_excel_data_decl=>zexcel_number_format.
-    data: stylemapping    type zif_excel_data_decl=>zexcel_s_stylemapping.
+    " Begin of change issue #152 - don't touch existing style if only value is passed
+    " For Date- or Timefields change the formatcode if nothing is set yet
+    " Enhancement option:  Check if existing formatcode is a date/ or timeformat
+    "                      If not, use default
+    data lo_format_code_datetime type zif_excel_data_decl=>zexcel_number_format.
+    data stylemapping            type zif_excel_data_decl=>zexcel_s_stylemapping.
     if <fs_sheet_content>-cell_style is initial.
-      <fs_sheet_content>-cell_style = me->excel->get_default_style( ).
+      <fs_sheet_content>-cell_style = excel->get_default_style( ).
     endif.
+
     case lv_value_type.
       when cl_abap_typedescr=>typekind_date.
         try.
-            stylemapping = me->excel->get_style_to_guid( <fs_sheet_content>-cell_style ).
-          catch zcx_excel .
+            stylemapping = excel->get_style_to_guid( <fs_sheet_content>-cell_style ).
+          catch zcx_excel.
         endtry.
-        if stylemapping-complete_stylex-number_format-format_code is initial or
-           stylemapping-complete_style-number_format-format_code is initial.
+        if    stylemapping-complete_stylex-number_format-format_code is initial
+           or stylemapping-complete_style-number_format-format_code  is initial.
           lo_format_code_datetime = zcl_excel_style_number_format=>c_format_date_std.
         else.
           lo_format_code_datetime = stylemapping-complete_style-number_format-format_code.
         endif.
-        me->change_cell_style( ip_column                      = lv_column
-                               ip_row                         = lv_row
-                               ip_number_format_format_code   = lo_format_code_datetime ).
+        change_cell_style( ip_column                    = lv_column
+                           ip_row                       = lv_row
+                           ip_number_format_format_code = lo_format_code_datetime ).
 
       when cl_abap_typedescr=>typekind_time.
         try.
-            stylemapping = me->excel->get_style_to_guid( <fs_sheet_content>-cell_style ).
-          catch zcx_excel .
+            stylemapping = excel->get_style_to_guid( <fs_sheet_content>-cell_style ).
+          catch zcx_excel.
         endtry.
-        if stylemapping-complete_stylex-number_format-format_code is initial or
-           stylemapping-complete_style-number_format-format_code is initial.
+        if    stylemapping-complete_stylex-number_format-format_code is initial
+           or stylemapping-complete_style-number_format-format_code  is initial.
           lo_format_code_datetime = zcl_excel_style_number_format=>c_format_date_time6.
         else.
           lo_format_code_datetime = stylemapping-complete_style-number_format-format_code.
         endif.
-        me->change_cell_style( ip_column                      = lv_column
-                               ip_row                         = lv_row
-                               ip_number_format_format_code   = lo_format_code_datetime ).
+        change_cell_style( ip_column                    = lv_column
+                           ip_row                       = lv_row
+                           ip_number_format_format_code = lo_format_code_datetime ).
 
       when typekind_utclong.
         try.
-            stylemapping = me->excel->get_style_to_guid( <fs_sheet_content>-cell_style ).
-          catch zcx_excel .
+            stylemapping = excel->get_style_to_guid( <fs_sheet_content>-cell_style ).
+          catch zcx_excel.
         endtry.
-        if stylemapping-complete_stylex-number_format-format_code is initial or
-           stylemapping-complete_style-number_format-format_code is initial.
+        if    stylemapping-complete_stylex-number_format-format_code is initial
+           or stylemapping-complete_style-number_format-format_code  is initial.
           lo_format_code_datetime = zcl_excel_style_number_format=>c_format_date_datetime.
         else.
           lo_format_code_datetime = stylemapping-complete_style-number_format-format_code.
         endif.
-        me->change_cell_style( ip_column                      = lv_column
-                               ip_row                         = lv_row
-                               ip_number_format_format_code   = lo_format_code_datetime ).
+        change_cell_style( ip_column                    = lv_column
+                           ip_row                       = lv_row
+                           ip_number_format_format_code = lo_format_code_datetime ).
 
     endcase.
-* End of change issue #152 - don't touch exisiting style if only value is passed
+    " End of change issue #152 - don't touch existing style if only value is passed
 
-* Fix issue #162
+    " Fix issue #162
     lv_value = ip_value.
     if lv_value cs cl_abap_char_utilities=>cr_lf.
-      me->change_cell_style( ip_column               = lv_column
-                             ip_row                  = lv_row
-                             ip_alignment_wraptext   = abap_true ).
+      change_cell_style( ip_column             = lv_column
+                         ip_row                = lv_row
+                         ip_alignment_wraptext = abap_true ).
     endif.
-* End of Fix issue #162
 
-  endmethod.                    "SET_CELL
+    if ip_currency is not initial or ip_unitofmeasure is not initial.
+      clear lv_newformat.
+      if ip_currency is not initial.
+        read table zcl_excel_common=>lt_currs into data(ls_curr) with key curr = ip_currency binary search.
+        lv_newformat = |* #,##0{ cond string( when ls_curr-dec is not initial then
+          '.' && repeat( val = '0' occ = ls_curr-dec )
+          else space ) }" { ip_currency }"|.
+      elseif ip_unitofmeasure is not initial.
+        read table zcl_excel_common=>lt_uoms into data(ls_uom) with key uom = ip_unitofmeasure binary search.
+        lv_newformat = |* #,##0{ cond string( when ls_uom-dec is not initial then
+          '.' && repeat( val = '0' occ = ls_uom-dec )
+          else space ) }" { ls_uom-uome }"|.
+      endif.
+      if lv_newformat is not initial.
+        change_cell_style( ip_column = lv_column
+                           ip_row    = lv_row
+                           ip_number_format_format_code = lv_newformat ).
+      endif.
+    endif.
+    " End of Fix issue #162
+  endmethod.
 
 
   method set_cell_formula.

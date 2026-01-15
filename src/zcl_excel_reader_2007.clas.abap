@@ -4030,7 +4030,6 @@ class zcl_excel_reader_2007 implementation.
         ls_field_catalog-position = lines( lt_field_catalog ) + 1.
         ls_field_catalog-fieldname = |COMP_{ ls_field_catalog-position pad = '0' align = right width = 4 }|.
         ls_field_catalog-scrtext_l = ls_table_column-name.
-        ls_field_catalog-dynpfld = abap_true.
         ls_field_catalog-abap_type = cl_abap_typedescr=>typekind_string.
         append ls_field_catalog to lt_field_catalog.
 

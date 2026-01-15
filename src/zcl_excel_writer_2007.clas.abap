@@ -42,7 +42,6 @@ class zcl_excel_writer_2007 definition
     constants cl_xl_drawing_for_comments type string value 'xl/drawings/vmlDrawing#.vml'. "#EC NOTEXT
     constants c_xl_drawings_vml_rels type string value 'xl/drawings/_rels/vmlDrawing#.vml.rels'. "#EC NOTEXT
     data ixml type ref to cl_ixml_core.
-    data control_characters type string.
 
     methods create_xl_sheet_sheet_data
       importing
@@ -302,22 +301,7 @@ class zcl_excel_writer_2007 implementation.
 
 
   method constructor.
-    data: lt_unicode_point_codes type table of string,
-          lv_unicode_point_code  type i.
-
     me->ixml ?= cl_ixml_core=>create( ).
-
-    split '0,1,2,3,4,5,6,7,8,' " U+0000 to U+0008
-       && '11,12,'             " U+000B, U+000C
-       && '14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,' " U+000E to U+001F
-       && '65534,65535'        " U+FFFE, U+FFFF
-      at ',' into table lt_unicode_point_codes.
-    control_characters = ``.
-    loop at lt_unicode_point_codes into lv_unicode_point_code.
-      "@TODO: To be fixed by Juwin
-      "control_characters = control_characters && cl_abap_conv_in_ce=>uccpi( lv_unicode_point_code ).
-    endloop.
-
   endmethod.
 
 
@@ -5688,9 +5672,7 @@ class zcl_excel_writer_2007 implementation.
     lo_element = lo_document->create_simple_element( name   = 'tableColumns'
                                                      parent = lo_document ).
 
-    loop at io_table->fieldcat into ls_fieldcat where dynpfld = abap_true.
-      lv_num_columns += 1.
-    endloop.
+    lv_num_columns += lines( io_table->fieldcat ).
 
     lv_value = lv_num_columns.
     lv_value = condense( lv_value ).
@@ -5699,7 +5681,7 @@ class zcl_excel_writer_2007 implementation.
 
     lo_element_root->append_child( new_child = lo_element ).
 
-    loop at io_table->fieldcat into ls_fieldcat where dynpfld = abap_true.
+    loop at io_table->fieldcat into ls_fieldcat.
       lo_element2 = lo_document->create_simple_element_ns( name   = 'tableColumn'
                                                            parent = lo_element ).
 
@@ -6112,31 +6094,7 @@ class zcl_excel_writer_2007 implementation.
 
 
   method escape_string_value.
-
-    data: lt_character_positions type table of i,
-          lv_character_position  type i,
-          lv_escaped_value       type string.
-
-    result = iv_value.
-    if result ca control_characters.
-
-      clear lt_character_positions.
-      append sy-fdpos to lt_character_positions.
-      lv_character_position = sy-fdpos + 1.
-      while result+lv_character_position ca control_characters.
-        lv_character_position += sy-fdpos.
-        append lv_character_position to lt_character_positions.
-        lv_character_position += 1.
-      endwhile.
-      sort lt_character_positions by table_line descending.
-
-      loop at lt_character_positions into lv_character_position.
-        "@TODO: to be fixed by Juwin
-        "lv_escaped_value = |_x{ cl_abap_conv_out_ce=>uccp( substring( val = result off = lv_character_position len = 1 ) ) }_|.
-        replace section offset lv_character_position length 1 of result with lv_escaped_value.
-      endloop.
-    endif.
-
+    result = xco_cp=>xstring( CL_ABAP_CONV_CODEPAGE=>create_out( )->convert( iv_value ) )->as_string( xco_cp_character=>code_page->utf_8 )->value.
   endmethod.
 
 

@@ -1,106 +1,117 @@
-CLASS zcl_excel_common DEFINITION
-  PUBLIC
-  FINAL
-  CREATE PUBLIC .
+class zcl_excel_common definition
+  public
+  final
+  create public .
 
 *"* public components of class ZCL_EXCEL_COMMON
 *"* do not include other source files here!!!
-  PUBLIC SECTION.
+  public section.
+    types: begin of ty_uom,
+             uom type i_unitofmeasure-UnitOfMeasure,
+             dec type i_unitofmeasure-UnitOfMeasureNumberOfDecimals,
+             uome type i_unitofmeasure-UnitOfMeasure_E,
+           end of ty_uom,
 
-    CONSTANTS c_excel_baseline_date TYPE d VALUE '19000101'. "#EC NOTEXT
-    CLASS-DATA c_excel_numfmt_offset TYPE int1 VALUE 164. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . " .
-    CONSTANTS c_excel_sheet_max_col TYPE int4 VALUE 16384.  "#EC NOTEXT
-    CONSTANTS c_excel_sheet_min_col TYPE int4 VALUE 1.      "#EC NOTEXT
-    CONSTANTS c_excel_sheet_max_row TYPE int4 VALUE 1048576. "#EC NOTEXT
-    CONSTANTS c_excel_sheet_min_row TYPE int4 VALUE 1.      "#EC NOTEXT
-    CLASS-DATA c_spras_en TYPE spras VALUE 'E'. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . " .
+           begin of ty_curr,
+             curr type waers,
+             dec  type i_currency-decimals,
+           end of ty_curr.
+
+    constants c_excel_baseline_date type d value '19000101'. "#EC NOTEXT
+    class-data c_excel_numfmt_offset type int1 value 164. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . " .
+    constants c_excel_sheet_max_col type int4 value 16384.  "#EC NOTEXT
+    constants c_excel_sheet_min_col type int4 value 1.      "#EC NOTEXT
+    constants c_excel_sheet_max_row type int4 value 1048576. "#EC NOTEXT
+    constants c_excel_sheet_min_row type int4 value 1.      "#EC NOTEXT
+    class-data c_spras_en type spras value 'E'. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . " .
     "CLASS-DATA o_conv TYPE REF TO cl_abap_conv_out_ce .
-    CONSTANTS c_excel_1900_leap_year TYPE d VALUE '19000228'. "#EC NOTEXT
-    CLASS-DATA c_xlsx_file_filter TYPE string VALUE 'Excel Workbook (*.xlsx)|*.xlsx|'. "#EC NOTEXT .  .  .  .  .  .  . " .
-
-    CLASS-METHODS class_constructor .
-    CLASS-METHODS describe_structure
-      IMPORTING
-        !io_struct      TYPE REF TO cl_abap_structdescr.
+    constants c_excel_1900_leap_year type d value '19000228'. "#EC NOTEXT
+    class-data c_xlsx_file_filter type string value 'Excel Workbook (*.xlsx)|*.xlsx|'. "#EC NOTEXT .  .  .  .  .  .  . " .
+    class-data lt_uoms type standard table of ty_uom.
+    class-data lt_currs type standard table of ty_curr.
+    class-methods class_constructor .
+    class-methods describe_structure
+      importing
+        !io_struct type ref to cl_abap_structdescr.
 *      RETURNING
 *        VALUE(rt_dfies) TYPE ddfields .
-    CLASS-METHODS convert_column2alpha
-      IMPORTING
-        !ip_column       TYPE simple
-      RETURNING
-        VALUE(ep_column) TYPE zif_excel_data_decl=>zexcel_cell_column_alpha
-      RAISING
+    class-methods convert_column2alpha
+      importing
+        !ip_column       type simple
+      returning
+        value(ep_column) type zif_excel_data_decl=>zexcel_cell_column_alpha
+      raising
         zcx_excel .
-    CLASS-METHODS convert_column2int
-      IMPORTING
-        !ip_column       TYPE simple
-      RETURNING
-        VALUE(ep_column) TYPE zif_excel_data_decl=>zexcel_cell_column
-      RAISING
+    class-methods convert_column2int
+      importing
+        !ip_column       type simple
+      returning
+        value(ep_column) type zif_excel_data_decl=>zexcel_cell_column
+      raising
         zcx_excel .
-    CLASS-METHODS convert_column_a_row2columnrow
-      IMPORTING
-        !i_column          TYPE simple
+    class-methods convert_column_a_row2columnrow
+      importing
+        !i_column          type simple
         !i_row             type zif_excel_data_decl=>zexcel_cell_row
-      RETURNING
-        VALUE(e_columnrow) TYPE string
-      RAISING
+      returning
+        value(e_columnrow) type string
+      raising
         zcx_excel.
-    CLASS-METHODS convert_columnrow2column_a_row
-      IMPORTING
-        !i_columnrow  TYPE clike
-      EXPORTING
+    class-methods convert_columnrow2column_a_row
+      importing
+        !i_columnrow  type clike
+      exporting
         !e_column     type zif_excel_data_decl=>zexcel_cell_column_alpha
         !e_column_int type zif_excel_data_decl=>zexcel_cell_column
         !e_row        type zif_excel_data_decl=>zexcel_cell_row
-      RAISING
+      raising
         zcx_excel.
-    CLASS-METHODS convert_range2column_a_row
-      IMPORTING
-        !i_range            TYPE clike
-        !i_allow_1dim_range TYPE abap_bool DEFAULT abap_false
-      EXPORTING
+    class-methods convert_range2column_a_row
+      importing
+        !i_range            type clike
+        !i_allow_1dim_range type abap_bool default abap_false
+      exporting
         !e_column_start     type zif_excel_data_decl=>zexcel_cell_column_alpha
         !e_column_start_int type zif_excel_data_decl=>zexcel_cell_column
         !e_column_end       type zif_excel_data_decl=>zexcel_cell_column_alpha
         !e_column_end_int   type zif_excel_data_decl=>zexcel_cell_column
         !e_row_start        type zif_excel_data_decl=>zexcel_cell_row
         !e_row_end          type zif_excel_data_decl=>zexcel_cell_row
-        !e_sheet            TYPE clike
-      RAISING
+        !e_sheet            type clike
+      raising
         zcx_excel .
-    CLASS-METHODS convert_columnrow2column_o_row
-      IMPORTING
-        !i_columnrow TYPE clike
-      EXPORTING
+    class-methods convert_columnrow2column_o_row
+      importing
+        !i_columnrow type clike
+      exporting
         !e_column    type zif_excel_data_decl=>zexcel_cell_column_alpha
         !e_row       type zif_excel_data_decl=>zexcel_cell_row .
-    CLASS-METHODS clone_ixml_with_namespaces
-      IMPORTING
-        element       TYPE REF TO if_ixml_element
-      RETURNING
-        VALUE(result) TYPE REF TO if_ixml_element.
-    CLASS-METHODS date_to_excel_string
-      IMPORTING
-        !ip_value       TYPE d
-      RETURNING
-        VALUE(ep_value) type zif_excel_data_decl=>zexcel_cell_value .
-    CLASS-METHODS encrypt_password
-      IMPORTING
+    class-methods clone_ixml_with_namespaces
+      importing
+        element       type ref to if_ixml_element
+      returning
+        value(result) type ref to if_ixml_element.
+    class-methods date_to_excel_string
+      importing
+        !ip_value       type d
+      returning
+        value(ep_value) type zif_excel_data_decl=>zexcel_cell_value .
+    class-methods encrypt_password
+      importing
         !i_pwd                 type zif_excel_data_decl=>zexcel_aes_password
-      RETURNING
-        VALUE(r_encrypted_pwd) type zif_excel_data_decl=>zexcel_aes_password .
-    CLASS-METHODS escape_string
-      IMPORTING
-        !ip_value               TYPE clike
-      RETURNING
-        VALUE(ep_escaped_value) TYPE string .
-    CLASS-METHODS unescape_string
-      IMPORTING
-        !iv_escaped                TYPE clike
-      RETURNING
-        VALUE(ev_unescaped_string) TYPE string
-      RAISING
+      returning
+        value(r_encrypted_pwd) type zif_excel_data_decl=>zexcel_aes_password .
+    class-methods escape_string
+      importing
+        !ip_value               type clike
+      returning
+        value(ep_escaped_value) type string .
+    class-methods unescape_string
+      importing
+        !iv_escaped                type clike
+      returning
+        value(ev_unescaped_string) type string
+      raising
         zcx_excel .
     "! <p class="shorttext synchronized" lang="en">Convert date from Excel format to SAP</p>
     "! @parameter ip_value | String being an Excel number representing a date (e.g. 45141 means 2023/08/03,
@@ -114,168 +125,167 @@ CLASS zcl_excel_common DEFINITION
     "! @parameter ep_value | Date corresponding to the input Excel number. It returns a null date if
     "!                       the input value contains non-numeric characters.
     "! @raising zcx_excel | The numeric input corresponds to a date before 1900/1/1 or after 9999/12/31.
-    CLASS-METHODS excel_string_to_date
-      IMPORTING
+    class-methods excel_string_to_date
+      importing
         !ip_value       type zif_excel_data_decl=>zexcel_cell_value
-        !ip_exact       TYPE abap_bool DEFAULT abap_false
-      RETURNING
-        VALUE(ep_value) TYPE d
-      RAISING
+        !ip_exact       type abap_bool default abap_false
+      returning
+        value(ep_value) type d
+      raising
         zcx_excel .
-    CLASS-METHODS excel_string_to_time
-      IMPORTING
+    class-methods excel_string_to_time
+      importing
         !ip_value       type zif_excel_data_decl=>zexcel_cell_value
-      RETURNING
-        VALUE(ep_value) TYPE t
-      RAISING
+      returning
+        value(ep_value) type t
+      raising
         zcx_excel .
-    CLASS-METHODS excel_string_to_number
-      IMPORTING
+    class-methods excel_string_to_number
+      importing
         !ip_value       type zif_excel_data_decl=>zexcel_cell_value
-      RETURNING
-        VALUE(ep_value) TYPE f
-      RAISING
+      returning
+        value(ep_value) type f
+      raising
         zcx_excel .
-    CLASS-METHODS get_fieldcatalog
-      IMPORTING
-        !ip_table              TYPE STANDARD TABLE
-        !iv_hide_mandt         TYPE abap_bool DEFAULT abap_true
-        !ip_conv_exit_length   TYPE abap_bool DEFAULT abap_false
-      RETURNING
-        VALUE(ep_fieldcatalog) type zif_excel_data_decl=>zexcel_t_fieldcatalog .
-    CLASS-METHODS number_to_excel_string
-      IMPORTING
-        VALUE(ip_value) TYPE numeric
-        ip_currency     TYPE waers_curc OPTIONAL
-      RETURNING
-        VALUE(ep_value) type zif_excel_data_decl=>zexcel_cell_value .
-    CLASS-METHODS recursive_class_to_struct
-      IMPORTING
-        !i_source  TYPE any
-      CHANGING
-        !e_target  TYPE data
-        !e_targetx TYPE data .
-    CLASS-METHODS recursive_struct_to_class
-      IMPORTING
-        !i_source  TYPE data
-        !i_sourcex TYPE data
-      CHANGING
-        !e_target  TYPE any .
-    CLASS-METHODS time_to_excel_string
-      IMPORTING
-        !ip_value       TYPE t
-      RETURNING
-        VALUE(ep_value) type zif_excel_data_decl=>zexcel_cell_value .
-    CLASS-METHODS utclong_to_excel_string
-      IMPORTING
-        !ip_utclong     TYPE any
-      RETURNING
-        VALUE(ep_value) type zif_excel_data_decl=>zexcel_cell_value .
-    TYPES: t_char10 TYPE c LENGTH 10.
-    TYPES: t_char255 TYPE c LENGTH 255.
-    CLASS-METHODS split_file
-      IMPORTING
-        !ip_file         TYPE t_char255
-      EXPORTING
-        !ep_file         TYPE t_char255
-        !ep_extension    TYPE t_char10
-        !ep_dotextension TYPE t_char10 .
-    CLASS-METHODS calculate_cell_distance
-      IMPORTING
-        !iv_reference_cell TYPE clike
-        !iv_current_cell   TYPE clike
-      EXPORTING
-        !ev_row_difference TYPE i
-        !ev_col_difference TYPE i
-      RAISING
+    class-methods get_fieldcatalog
+      importing
+        !ip_table              type standard table
+      returning
+        value(ep_fieldcatalog) type zif_excel_data_decl=>zexcel_t_fieldcatalog .
+    class-methods number_to_excel_string
+      importing
+        value(ip_value)  type numeric
+        ip_currency      type waers_curc optional
+        ip_unitofmeasure type meins optional
+      returning
+        value(ep_value)  type zif_excel_data_decl=>zexcel_cell_value .
+    class-methods recursive_class_to_struct
+      importing
+        !i_source  type any
+      changing
+        !e_target  type data
+        !e_targetx type data .
+    class-methods recursive_struct_to_class
+      importing
+        !i_source  type data
+        !i_sourcex type data
+      changing
+        !e_target  type any .
+    class-methods time_to_excel_string
+      importing
+        !ip_value       type t
+      returning
+        value(ep_value) type zif_excel_data_decl=>zexcel_cell_value .
+    class-methods utclong_to_excel_string
+      importing
+        !ip_utclong     type any
+      returning
+        value(ep_value) type zif_excel_data_decl=>zexcel_cell_value .
+    types: t_char10 type c length 10.
+    types: t_char255 type c length 255.
+    class-methods split_file
+      importing
+        !ip_file         type t_char255
+      exporting
+        !ep_file         type t_char255
+        !ep_extension    type t_char10
+        !ep_dotextension type t_char10 .
+    class-methods calculate_cell_distance
+      importing
+        !iv_reference_cell type clike
+        !iv_current_cell   type clike
+      exporting
+        !ev_row_difference type i
+        !ev_col_difference type i
+      raising
         zcx_excel .
-    CLASS-METHODS determine_resulting_formula
-      IMPORTING
-        !iv_reference_cell          TYPE clike
-        !iv_reference_formula       TYPE clike
-        !iv_current_cell            TYPE clike
-      RETURNING
-        VALUE(ev_resulting_formula) TYPE string
-      RAISING
+    class-methods determine_resulting_formula
+      importing
+        !iv_reference_cell          type clike
+        !iv_reference_formula       type clike
+        !iv_current_cell            type clike
+      returning
+        value(ev_resulting_formula) type string
+      raising
         zcx_excel .
-    CLASS-METHODS shift_formula
-      IMPORTING
-        !iv_reference_formula       TYPE clike
-        VALUE(iv_shift_cols)        TYPE i
-        VALUE(iv_shift_rows)        TYPE i
-      RETURNING
-        VALUE(ev_resulting_formula) TYPE string
-      RAISING
+    class-methods shift_formula
+      importing
+        !iv_reference_formula       type clike
+        value(iv_shift_cols)        type i
+        value(iv_shift_rows)        type i
+      returning
+        value(ev_resulting_formula) type string
+      raising
         zcx_excel .
-    CLASS-METHODS is_cell_in_range
-      IMPORTING
-        !ip_column         TYPE simple
+    class-methods is_cell_in_range
+      importing
+        !ip_column         type simple
         !ip_row            type zif_excel_data_decl=>zexcel_cell_row
-        !ip_range          TYPE clike
-      RETURNING
-        VALUE(rp_in_range) TYPE abap_bool
-      RAISING
+        !ip_range          type clike
+      returning
+        value(rp_in_range) type abap_bool
+      raising
         zcx_excel .
 *"* protected components of class ZCL_EXCEL_COMMON
 *"* do not include other source files here!!!
 *"* protected components of class ZCL_EXCEL_COMMON
 *"* do not include other source files here!!!
-  PROTECTED SECTION.
-  PRIVATE SECTION.
+  protected section.
+  private section.
 
-    CLASS-DATA c_excel_col_module TYPE int2 VALUE 64. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  .  .  .  . " .
-    CLASS-DATA sv_prev_in1  type zif_excel_data_decl=>zexcel_cell_column.
-    CLASS-DATA sv_prev_out1 type zif_excel_data_decl=>zexcel_cell_column_alpha.
-    CLASS-DATA sv_prev_in2  TYPE c LENGTH 10.
-    CLASS-DATA sv_prev_out2 type zif_excel_data_decl=>zexcel_cell_column.
-    CLASS-METHODS structure_case
-      IMPORTING
-        !is_component  TYPE abap_componentdescr
-      CHANGING
-        !xt_components TYPE abap_component_tab .
-    CLASS-METHODS structure_recursive
-      IMPORTING
-        !is_component        TYPE abap_componentdescr
-      RETURNING
-        VALUE(rt_components) TYPE abap_component_tab .
-    TYPES ty_char1 TYPE c LENGTH 1.
-    CLASS-METHODS char2hex
-      IMPORTING
-        !i_char      TYPE ty_char1
-      RETURNING
-        VALUE(r_hex) type zif_excel_data_decl=>zexcel_pwd_hash .
-    CLASS-METHODS shl01
-      IMPORTING
+    class-data c_excel_col_module type int2 value 64. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  .  .  .  . " .
+    class-data sv_prev_in1  type zif_excel_data_decl=>zexcel_cell_column.
+    class-data sv_prev_out1 type zif_excel_data_decl=>zexcel_cell_column_alpha.
+    class-data sv_prev_in2  type c length 10.
+    class-data sv_prev_out2 type zif_excel_data_decl=>zexcel_cell_column.
+    class-methods structure_case
+      importing
+        !is_component  type abap_componentdescr
+      changing
+        !xt_components type abap_component_tab .
+    class-methods structure_recursive
+      importing
+        !is_component        type abap_componentdescr
+      returning
+        value(rt_components) type abap_component_tab .
+    types ty_char1 type c length 1.
+    class-methods char2hex
+      importing
+        !i_char      type ty_char1
+      returning
+        value(r_hex) type zif_excel_data_decl=>zexcel_pwd_hash .
+    class-methods shl01
+      importing
         !i_pwd_hash       type zif_excel_data_decl=>zexcel_pwd_hash
-      RETURNING
-        VALUE(r_pwd_hash) type zif_excel_data_decl=>zexcel_pwd_hash .
-    CLASS-METHODS shr14
-      IMPORTING
+      returning
+        value(r_pwd_hash) type zif_excel_data_decl=>zexcel_pwd_hash .
+    class-methods shr14
+      importing
         !i_pwd_hash       type zif_excel_data_decl=>zexcel_pwd_hash
-      RETURNING
-        VALUE(r_pwd_hash) type zif_excel_data_decl=>zexcel_pwd_hash .
-ENDCLASS.
+      returning
+        value(r_pwd_hash) type zif_excel_data_decl=>zexcel_pwd_hash .
+endclass.
 
 
 
-CLASS zcl_excel_common IMPLEMENTATION.
+class zcl_excel_common implementation.
 
 
-  METHOD calculate_cell_distance.
+  method calculate_cell_distance.
 
-    DATA: lv_reference_row       TYPE i,
+    data: lv_reference_row       type i,
           lv_reference_col_alpha type zif_excel_data_decl=>zexcel_cell_column_alpha,
-          lv_reference_col       TYPE i,
-          lv_current_row         TYPE i,
+          lv_reference_col       type i,
+          lv_current_row         type i,
           lv_current_col_alpha   type zif_excel_data_decl=>zexcel_cell_column_alpha,
-          lv_current_col         TYPE i.
+          lv_current_col         type i.
 
 *--------------------------------------------------------------------*
 * Split reference  cell into numerical row/column representation
 *--------------------------------------------------------------------*
-    convert_columnrow2column_a_row( EXPORTING
+    convert_columnrow2column_a_row( exporting
                                       i_columnrow = iv_reference_cell
-                                    IMPORTING
+                                    importing
                                       e_column    = lv_reference_col_alpha
                                       e_row       = lv_reference_row ).
     lv_reference_col = convert_column2int( lv_reference_col_alpha ).
@@ -283,9 +293,9 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *--------------------------------------------------------------------*
 * Split current  cell into numerical row/column representation
 *--------------------------------------------------------------------*
-    convert_columnrow2column_a_row( EXPORTING
+    convert_columnrow2column_a_row( exporting
                                       i_columnrow = iv_current_cell
-                                    IMPORTING
+                                    importing
                                       e_column    = lv_current_col_alpha
                                       e_row       = lv_current_row ).
     lv_current_col = convert_column2int( lv_current_col_alpha ).
@@ -300,11 +310,11 @@ CLASS zcl_excel_common IMPLEMENTATION.
     ev_row_difference = lv_current_row - lv_reference_row.
     ev_col_difference = lv_current_col - lv_reference_col.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD char2hex.
-"@TODO: Juwin to Fix
+  method char2hex.
+    "@TODO: Juwin to Fix
 *    IF o_conv IS NOT BOUND.
 *      o_conv = cl_abap_conv_out_ce=>create( endian   = 'L'
 *                                            ignore_cerr = abap_true
@@ -315,19 +325,19 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *    CALL METHOD o_conv->write( data = i_char ).
 *    r_hex+1 = o_conv->get_buffer( ). " x'65' must be x'0065'
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD class_constructor.
+  method class_constructor.
     c_xlsx_file_filter = 'Excel Workbook (*.xlsx)|*.xlsx|'(005).
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD convert_column2alpha.
+  method convert_column2alpha.
 
-    DATA: lv_uccpi  TYPE i,
-          lv_text   TYPE c LENGTH 2,
-          lv_module TYPE int4,
+    data: lv_uccpi  type i,
+          lv_text   type c length 2,
+          lv_module type int4,
           lv_column type zif_excel_data_decl=>zexcel_cell_column.
 
 * Propagate zcx_excel if error occurs           " issue #155 - less restrictive typing for ip_column
@@ -336,27 +346,27 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *--------------------------------------------------------------------*
 * Check whether column is in allowed range for EXCEL to handle ( 1-16384 )
 *--------------------------------------------------------------------*
-    IF   lv_column > 16384
-      OR lv_column < 1.
+    if   lv_column > 16384
+      or lv_column < 1.
       zcx_excel=>raise_text( 'Index out of bounds' ).
-    ENDIF.
+    endif.
 
 *--------------------------------------------------------------------*
 * Look up for previous succesfull cached result
 *--------------------------------------------------------------------*
-    IF lv_column = sv_prev_in1 AND sv_prev_out1 IS NOT INITIAL.
+    if lv_column = sv_prev_in1 and sv_prev_out1 is not initial.
       ep_column = sv_prev_out1.
-      RETURN.
-    ELSE.
-      CLEAR sv_prev_out1.
+      return.
+    else.
+      clear sv_prev_out1.
       sv_prev_in1 = lv_column.
-    ENDIF.
+    endif.
 
 *--------------------------------------------------------------------*
 * Build alpha representation of column
 *--------------------------------------------------------------------*
-    WHILE lv_column GT 0.
-*@TODO: Juwin to Fix
+    ep_column = xco_cp_xlsx=>coordinate->for_numeric_value( lv_column )->get_alphabetic_value( ).
+*    WHILE lv_column GT 0.
 *      lv_module = ( lv_column - 1 ) MOD 26.
 *      lv_uccpi  = 65 + lv_module.
 *
@@ -364,172 +374,64 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *
 *      lv_text   = cl_abap_conv_in_ce=>uccpi( lv_uccpi ).
 *      CONCATENATE lv_text ep_column INTO ep_column.
-
-    ENDWHILE.
+*
+*    ENDWHILE.
 
 *--------------------------------------------------------------------*
 * Save succesfull output into cache
 *--------------------------------------------------------------------*
     sv_prev_out1 = ep_column.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD convert_column2int.
+  method convert_column2int.
+    data: lv_column       type zif_excel_data_decl=>zexcel_cell_column_alpha,
+          lv_column_c     type c length 10,
+          lv_errormessage type string.                          " Can't pass '...'(abc) to exception-class
 
-*--------------------------------------------------------------------*
-* issue #230   - Pimp my Code
-*              - Stefan Schmoecker,      (done)              2012-12-29
-*              - ...
-* changes: renaming variables to naming conventions
-*          removing unused variables
-*          removing commented out code that is inactive for more then half a year
-*          message made to support multilinguality
-*          adding comments to explain what we are trying to achieve
-*--------------------------------------------------------------------*
-* issue#246 - error converting lower case column names
-*              - Stefan Schmoecker,                          2012-12-29
-* changes: translating the correct variable to upper dase
-*          adding missing exception if input is a number
-*          that is out of bounds
-*          adding missing exception if input contains
-*          illegal characters like german umlauts
-*--------------------------------------------------------------------*
-
-    DATA: lv_column       type zif_excel_data_decl=>zexcel_cell_column_alpha,
-          lv_column_c     TYPE c LENGTH 10,
-          lv_column_s     TYPE string,
-          lv_errormessage TYPE string,                          " Can't pass '...'(abc) to exception-class
-          lv_modulo       TYPE i.
-
-*--------------------------------------------------------------------*
-* This module tries to identify which column a user wants to access
-* Numbers as input are just passed back, anything else will be converted
-* using EXCEL nomenclatura A = 1, AA = 27, ..., XFD = 16384
-*--------------------------------------------------------------------*
-
-*--------------------------------------------------------------------*
-* Normalize input ( upper case , no gaps )
-*--------------------------------------------------------------------*
     lv_column_c = ip_column.
-    TRANSLATE lv_column_c TO UPPER CASE.                      " Fix #246
-    CONDENSE lv_column_c NO-GAPS.
-    IF lv_column_c EQ ''.
-      MESSAGE e800(zabap2xlsx) INTO lv_errormessage.
+    translate lv_column_c to upper case.                      " Fix #246
+    condense lv_column_c no-gaps.
+    if lv_column_c eq ''.
+      message e800(zabap2xlsx) into lv_errormessage.
       zcx_excel=>raise_symsg( ).
-    ENDIF.
+    endif.
 
-*--------------------------------------------------------------------*
-* Look up for previous succesfull cached result
-*--------------------------------------------------------------------*
-    IF lv_column_c = sv_prev_in2 AND sv_prev_out2 IS NOT INITIAL.
-      ep_column = sv_prev_out2.
-      RETURN.
-    ELSE.
-      CLEAR sv_prev_out2.
-      sv_prev_in2 = lv_column_c.
-    ENDIF.
-
-*--------------------------------------------------------------------*
-* If a number gets passed, just convert it to an integer and return
-* the converted value
-*--------------------------------------------------------------------*
-    TRY.
-        IF lv_column_c CO '1234567890 '.                      " Fix #164
+    try.
+        if lv_column_c co '1234567890 '.                      " Fix #164
           ep_column = lv_column_c.                            " Fix #164
 *--------------------------------------------------------------------*
 * Maximum column for EXCEL:  XFD = 16384    " if anyone has a reference for this information - please add here instead of this comment
 *--------------------------------------------------------------------*
-          IF ep_column > 16384 OR ep_column < 1.
+          if ep_column > 16384 or ep_column < 1.
             lv_errormessage = 'Index out of bounds'(004).
             zcx_excel=>raise_text( lv_errormessage ).
-          ENDIF.
-          RETURN.
-        ENDIF.
-      CATCH cx_sy_conversion_no_number.                 "#EC NO_HANDLER
+          endif.
+          return.
+        else.
+          ep_column = xco_cp_xlsx=>coordinate->for_alphabetic_value( lv_column_c )->get_numeric_value( ).
+        endif.
+      catch cx_sy_conversion_no_number.                 "#EC NO_HANDLER
         " Try the character-approach if approach via number has failed
-    ENDTRY.
-
-*--------------------------------------------------------------------*
-* Raise error if unexpected characters turns up
-*--------------------------------------------------------------------*
-    lv_column_s = lv_column_c.
-    IF lv_column_s CN sy-abcde.
-      MESSAGE e800(zabap2xlsx) INTO lv_errormessage.
-      zcx_excel=>raise_symsg( ).
-    ENDIF.
-
-    DO 1 TIMES. "Because of using CHECK
-*--------------------------------------------------------------------*
-* Interpret input as number to base 26 with A=1, ... Z=26
-* Raise error if unexpected character turns up
-*--------------------------------------------------------------------*
-* 1st character
-*--------------------------------------------------------------------*
-      lv_column = lv_column_c.
-      FIND lv_column+0(1) IN sy-abcde MATCH OFFSET lv_modulo.
-      lv_modulo = lv_modulo + 1.
-      IF lv_modulo < 1 OR lv_modulo > 26.
-        MESSAGE e800(zabap2xlsx) INTO lv_errormessage.
-        zcx_excel=>raise_symsg( ).
-      ENDIF.
-      ep_column = lv_modulo.                    " Leftmost digit
-
-*--------------------------------------------------------------------*
-* 2nd character if present
-*--------------------------------------------------------------------*
-      CHECK lv_column+1(1) IS NOT INITIAL.      " No need to continue if string ended
-      FIND lv_column+1(1) IN sy-abcde MATCH OFFSET lv_modulo.
-      lv_modulo = lv_modulo + 1.
-      IF lv_modulo < 1 OR lv_modulo > 26.
-        MESSAGE e800(zabap2xlsx) INTO lv_errormessage.
-        zcx_excel=>raise_symsg( ).
-      ENDIF.
-      ep_column = 26 * ep_column + lv_modulo.   " if second digit is present first digit is for 26^1
-
-*--------------------------------------------------------------------*
-* 3rd character if present
-*--------------------------------------------------------------------*
-      CHECK lv_column+2(1) IS NOT INITIAL.      " No need to continue if string ended
-      FIND lv_column+2(1) IN sy-abcde MATCH OFFSET lv_modulo.
-      lv_modulo = lv_modulo + 1.
-      IF lv_modulo < 1 OR lv_modulo > 26.
-        MESSAGE e800(zabap2xlsx) INTO lv_errormessage.
-        zcx_excel=>raise_symsg( ).
-      ENDIF.
-      ep_column = 26 * ep_column + lv_modulo.   " if third digit is present first digit is for 26^2 and second digit for 26^1
-    ENDDO.
-
-*--------------------------------------------------------------------*
-* Maximum column for EXCEL:  XFD = 16384    " if anyone has a reference for this information - please add here instead of this comment
-*--------------------------------------------------------------------*
-    IF ep_column > 16384 OR ep_column < 1.
-      lv_errormessage = 'Index out of bounds'(004).
-      zcx_excel=>raise_text( lv_errormessage ).
-    ENDIF.
-
-*--------------------------------------------------------------------*
-* Save succesfull output into cache
-*--------------------------------------------------------------------*
-    sv_prev_out2 = ep_column.
-
-  ENDMETHOD.
+    endtry.
+  endmethod.
 
 
-  METHOD convert_column_a_row2columnrow.
-    DATA: lv_row_alpha    TYPE string,
+  method convert_column_a_row2columnrow.
+    data: lv_row_alpha    type string,
           lv_column_alpha type zif_excel_data_decl=>zexcel_cell_column_alpha.
 
     lv_row_alpha = i_row.
     lv_column_alpha = zcl_excel_common=>convert_column2alpha( i_column ).
-    SHIFT lv_row_alpha RIGHT DELETING TRAILING space.
-    SHIFT lv_row_alpha LEFT DELETING LEADING space.
-    CONCATENATE lv_column_alpha lv_row_alpha INTO e_columnrow.
+    shift lv_row_alpha right deleting trailing space.
+    shift lv_row_alpha left deleting leading space.
+    concatenate lv_column_alpha lv_row_alpha into e_columnrow.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD convert_columnrow2column_a_row.
+  method convert_columnrow2column_a_row.
 *--------------------------------------------------------------------*
     "issue #256 - replacing char processing with regex
 *--------------------------------------------------------------------*
@@ -537,22 +439,22 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *    Allow input to be CLIKE instead of STRING
 *--------------------------------------------------------------------*
 
-    DATA: pane_cell_row_a TYPE string,
-          lv_columnrow    TYPE string.
+    data: pane_cell_row_a type string,
+          lv_columnrow    type string.
 
     lv_columnrow = i_columnrow.    " Get rid of trailing blanks
 
-    FIND REGEX '^(\D+)(\d+)$' IN lv_columnrow SUBMATCHES e_column
+    find regex '^(\D+)(\d+)$' in lv_columnrow submatches e_column
                                                          pane_cell_row_a.
-    IF e_column_int IS SUPPLIED.
+    if e_column_int is supplied.
       e_column_int = convert_column2int( ip_column = e_column ).
-    ENDIF.
+    endif.
     e_row = pane_cell_row_a.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD convert_range2column_a_row.
+  method convert_range2column_a_row.
 *--------------------------------------------------------------------*
 * issue #230   - Pimp my Code
 *              - Stefan Schmoecker,      (done)              2012-12-07
@@ -575,12 +477,12 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *          e_sheet changed to clike
 *--------------------------------------------------------------------*
 
-    DATA: lv_sheet           TYPE string,
-          lv_range           TYPE string,
-          lv_columnrow_start TYPE string,
-          lv_columnrow_end   TYPE string,
-          lv_position        TYPE i,
-          lv_errormessage    TYPE string.                          " Can't pass '...'(abc) to exception-class
+    data: lv_sheet           type string,
+          lv_range           type string,
+          lv_columnrow_start type string,
+          lv_columnrow_end   type string,
+          lv_position        type i,
+          lv_errormessage    type string.                          " Can't pass '...'(abc) to exception-class
 
 
 *--------------------------------------------------------------------*
@@ -591,135 +493,135 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *         - d) no sheetname - just area                      example $B$6:$D$13
 *--------------------------------------------------------------------*
 * Initialize output parameters
-    CLEAR: e_column_start,
+    clear: e_column_start,
            e_column_end,
            e_row_start,
            e_row_end,
            e_sheet.
 
-    IF i_range IS INITIAL.                                " a) input empty --> nothing to do
-      RETURN.
+    if i_range is initial.                                " a) input empty --> nothing to do
+      return.
 
-    ELSEIF i_range(1) = `'`.                              " b) sheetname existing - starts with '
-      FIND REGEX '\![^\!]*$' IN i_range MATCH OFFSET lv_position.  " Find last !
-      IF sy-subrc = 0.
+    elseif i_range(1) = `'`.                              " b) sheetname existing - starts with '
+      find regex '\![^\!]*$' in i_range match offset lv_position.  " Find last !
+      if sy-subrc = 0.
         lv_sheet = i_range(lv_position).
-        ADD 1 TO lv_position.
+        add 1 to lv_position.
         lv_range = i_range.
-        SHIFT lv_range LEFT BY lv_position PLACES.
-      ELSE.
+        shift lv_range left by lv_position places.
+      else.
         lv_errormessage = 'Invalid range'(001).
         zcx_excel=>raise_text( lv_errormessage ).
-      ENDIF.
+      endif.
 
-    ELSEIF i_range CS '!'.                                " c) sheetname existing - does not start with '
-      SPLIT i_range AT '!' INTO lv_sheet lv_range.
+    elseif i_range cs '!'.                                " c) sheetname existing - does not start with '
+      split i_range at '!' into lv_sheet lv_range.
       " begin Dennis Schaaf
-      IF lv_range CP '*#REF*'.
+      if lv_range cp '*#REF*'.
         lv_errormessage = 'Invalid range'(001).
         zcx_excel=>raise_text( lv_errormessage ).
-      ENDIF.
+      endif.
       " end Dennis Schaaf
-    ELSE.                                                 " d) no sheetname - just area
+    else.                                                 " d) no sheetname - just area
       lv_range = i_range.
-    ENDIF.
+    endif.
 
-    REPLACE ALL OCCURRENCES OF '$' IN lv_range WITH ''.
-    SPLIT lv_range AT ':' INTO lv_columnrow_start lv_columnrow_end.
+    replace all occurrences of '$' in lv_range with ''.
+    split lv_range at ':' into lv_columnrow_start lv_columnrow_end.
 
-    IF i_allow_1dim_range = abap_true.
-      convert_columnrow2column_o_row( EXPORTING i_columnrow = lv_columnrow_start
-                                      IMPORTING e_column    = e_column_start
+    if i_allow_1dim_range = abap_true.
+      convert_columnrow2column_o_row( exporting i_columnrow = lv_columnrow_start
+                                      importing e_column    = e_column_start
                                                 e_row       = e_row_start ).
-      convert_columnrow2column_o_row( EXPORTING i_columnrow = lv_columnrow_end
-                                      IMPORTING e_column    = e_column_end
+      convert_columnrow2column_o_row( exporting i_columnrow = lv_columnrow_end
+                                      importing e_column    = e_column_end
                                                 e_row       = e_row_end ).
-    ELSE.
-      convert_columnrow2column_a_row( EXPORTING i_columnrow = lv_columnrow_start
-                                      IMPORTING e_column    = e_column_start
+    else.
+      convert_columnrow2column_a_row( exporting i_columnrow = lv_columnrow_start
+                                      importing e_column    = e_column_start
                                                 e_row       = e_row_start ).
-      convert_columnrow2column_a_row( EXPORTING i_columnrow = lv_columnrow_end
-                                      IMPORTING e_column    = e_column_end
+      convert_columnrow2column_a_row( exporting i_columnrow = lv_columnrow_end
+                                      importing e_column    = e_column_end
                                                 e_row       = e_row_end ).
-    ENDIF.
+    endif.
 
-    IF e_column_start_int IS SUPPLIED AND e_column_start IS NOT INITIAL.
+    if e_column_start_int is supplied and e_column_start is not initial.
       e_column_start_int = convert_column2int( e_column_start ).
-    ENDIF.
-    IF e_column_end_int IS SUPPLIED AND e_column_end IS NOT INITIAL.
+    endif.
+    if e_column_end_int is supplied and e_column_end is not initial.
       e_column_end_int = convert_column2int( e_column_end ).
-    ENDIF.
+    endif.
 
     e_sheet = unescape_string( lv_sheet ).                  " Return in unescaped form
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD convert_columnrow2column_o_row.
+  method convert_columnrow2column_o_row.
 
-    DATA: row       TYPE string.
-    DATA: columnrow TYPE string.
+    data: row       type string.
+    data: columnrow type string.
 
-    CLEAR e_column.
+    clear e_column.
 
     columnrow = i_columnrow.
 
-    FIND REGEX '^(\D*)(\d*)$' IN columnrow SUBMATCHES e_column
+    find regex '^(\D*)(\d*)$' in columnrow submatches e_column
                                                       row.
 
     e_row = row.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD clone_ixml_with_namespaces.
+  method clone_ixml_with_namespaces.
 
-    TYPES: BEGIN OF ty_name_value,
-             name  TYPE string,
-             value TYPE string,
-           END OF ty_name_value.
+    types: begin of ty_name_value,
+             name  type string,
+             value type string,
+           end of ty_name_value.
 
-    DATA: iterator    TYPE REF TO if_ixml_node_iterator,
-          node        TYPE REF TO if_ixml_node,
-          xmlns       TYPE ty_name_value,
-          xmlns_table TYPE TABLE OF ty_name_value.
-    FIELD-SYMBOLS <xmlns> TYPE ty_name_value.
+    data: iterator    type ref to if_ixml_node_iterator,
+          node        type ref to if_ixml_node,
+          xmlns       type ty_name_value,
+          xmlns_table type table of ty_name_value.
+    field-symbols <xmlns> type ty_name_value.
 
     iterator = element->create_iterator( ).
     result ?= element->clone( ).
     node = iterator->get_next( ).
-    WHILE node IS BOUND.
+    while node is bound.
       xmlns-name = node->get_namespace_prefix( ).
       xmlns-value = node->get_namespace_uri( ).
-      COLLECT xmlns INTO xmlns_table.
+      collect xmlns into xmlns_table.
       node = iterator->get_next( ).
-    ENDWHILE.
+    endwhile.
 
-    LOOP AT xmlns_table ASSIGNING <xmlns>.
+    loop at xmlns_table assigning <xmlns>.
       result->set_attribute_ns( prefix = 'xmlns' name = <xmlns>-name value = <xmlns>-value ).
-    ENDLOOP.
+    endloop.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD date_to_excel_string.
-    DATA: lv_date_diff         TYPE i.
+  method date_to_excel_string.
+    data: lv_date_diff         type i.
 
-    CHECK ip_value IS NOT INITIAL
-      AND ip_value <> space.
+    check ip_value is not initial
+      and ip_value <> space.
     " Needed hack caused by the problem that:
     " Excel 2000 incorrectly assumes that the year 1900 is a leap year
     " http://support.microsoft.com/kb/214326/en-us
-    IF ip_value > c_excel_1900_leap_year.
+    if ip_value > c_excel_1900_leap_year.
       lv_date_diff = ip_value - c_excel_baseline_date + 2.
-    ELSE.
+    else.
       lv_date_diff = ip_value - c_excel_baseline_date + 1.
-    ENDIF.
+    endif.
     ep_value = zcl_excel_common=>number_to_excel_string( ip_value = lv_date_diff ).
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD describe_structure.
-"@TODO: Juwin to throw error
+  method describe_structure.
+    "@TODO: Juwin to throw error
 *    DATA: lt_components TYPE abap_component_tab,
 *          lt_comps      TYPE abap_component_tab,
 *          ls_component  TYPE abap_componentdescr,
@@ -764,21 +666,21 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *        ENDIF.
 *      ENDLOOP.
 *    ENDIF.
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD determine_resulting_formula.
+  method determine_resulting_formula.
 
-    DATA: lv_row_difference TYPE i,
-          lv_col_difference TYPE i.
+    data: lv_row_difference type i,
+          lv_col_difference type i.
 
 *--------------------------------------------------------------------*
 * Calculate distance of reference and current cell
 *--------------------------------------------------------------------*
-    calculate_cell_distance( EXPORTING
+    calculate_cell_distance( exporting
                                iv_reference_cell = iv_reference_cell
                                iv_current_cell   = iv_current_cell
-                             IMPORTING
+                             importing
                                ev_row_difference = lv_row_difference
                                ev_col_difference = lv_col_difference ).
 
@@ -789,50 +691,50 @@ CLASS zcl_excel_common IMPLEMENTATION.
                                           iv_shift_rows        = lv_row_difference
                                           iv_shift_cols        = lv_col_difference ).
 
-  ENDMETHOD.                    "determine_resulting_formula
+  endmethod.                    "determine_resulting_formula
 
 
-  METHOD encrypt_password.
+  method encrypt_password.
 
-    DATA lv_curr_offset            TYPE i.
-    DATA lv_curr_char              TYPE c LENGTH 1.
-    DATA lv_curr_hex               type zif_excel_data_decl=>zexcel_pwd_hash.
-    DATA lv_pwd_len                type zif_excel_data_decl=>zexcel_pwd_hash.
-    DATA lv_pwd_hash               type zif_excel_data_decl=>zexcel_pwd_hash.
+    data lv_curr_offset            type i.
+    data lv_curr_char              type c length 1.
+    data lv_curr_hex               type zif_excel_data_decl=>zexcel_pwd_hash.
+    data lv_pwd_len                type zif_excel_data_decl=>zexcel_pwd_hash.
+    data lv_pwd_hash               type zif_excel_data_decl=>zexcel_pwd_hash.
 
-    CONSTANTS:
-      lv_0x7fff type zif_excel_data_decl=>zexcel_pwd_hash VALUE '7FFF',
-      lv_0x0001 type zif_excel_data_decl=>zexcel_pwd_hash VALUE '0001',
-      lv_0xce4b type zif_excel_data_decl=>zexcel_pwd_hash VALUE 'CE4B'.
+    constants:
+      lv_0x7fff type zif_excel_data_decl=>zexcel_pwd_hash value '7FFF',
+      lv_0x0001 type zif_excel_data_decl=>zexcel_pwd_hash value '0001',
+      lv_0xce4b type zif_excel_data_decl=>zexcel_pwd_hash value 'CE4B'.
 
-    DATA lv_pwd            type zif_excel_data_decl=>zexcel_aes_password.
+    data lv_pwd            type zif_excel_data_decl=>zexcel_aes_password.
 
     lv_pwd = i_pwd.
 
     lv_pwd_len = strlen( lv_pwd ).
     lv_curr_offset = lv_pwd_len - 1.
 
-    WHILE lv_curr_offset GE 0.
+    while lv_curr_offset ge 0.
 
       lv_curr_char = lv_pwd+lv_curr_offset(1).
       lv_curr_hex = char2hex( lv_curr_char ).
 
-      lv_pwd_hash = (  shr14( lv_pwd_hash ) BIT-AND lv_0x0001 ) BIT-OR ( shl01( lv_pwd_hash ) BIT-AND lv_0x7fff ).
+      lv_pwd_hash = (  shr14( lv_pwd_hash ) bit-and lv_0x0001 ) bit-or ( shl01( lv_pwd_hash ) bit-and lv_0x7fff ).
 
-      lv_pwd_hash = lv_pwd_hash BIT-XOR lv_curr_hex.
-      SUBTRACT 1 FROM lv_curr_offset.
-    ENDWHILE.
+      lv_pwd_hash = lv_pwd_hash bit-xor lv_curr_hex.
+      subtract 1 from lv_curr_offset.
+    endwhile.
 
-    lv_pwd_hash = (  shr14( lv_pwd_hash ) BIT-AND lv_0x0001 ) BIT-OR ( shl01( lv_pwd_hash ) BIT-AND lv_0x7fff ).
-    lv_pwd_hash = lv_pwd_hash BIT-XOR lv_0xce4b.
-    lv_pwd_hash = lv_pwd_hash BIT-XOR lv_pwd_len.
+    lv_pwd_hash = (  shr14( lv_pwd_hash ) bit-and lv_0x0001 ) bit-or ( shl01( lv_pwd_hash ) bit-and lv_0x7fff ).
+    lv_pwd_hash = lv_pwd_hash bit-xor lv_0xce4b.
+    lv_pwd_hash = lv_pwd_hash bit-xor lv_pwd_len.
 
     r_encrypted_pwd = lv_pwd_hash.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD escape_string.
+  method escape_string.
 *--------------------------------------------------------------------*
 * issue #230   - Pimp my Code
 *              - Stefan Schmoecker,      (done)              2012-12-08
@@ -850,7 +752,7 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *              - Stefan Schmoecker,                          2012-12-08
 * changes: ip_value changed to clike
 *--------------------------------------------------------------------*
-    DATA:       lv_value                        TYPE string.
+    data:       lv_value                        type string.
 
 *--------------------------------------------------------------------*
 * There exist various situations when a space will be used to separate
@@ -870,160 +772,104 @@ CLASS zcl_excel_common IMPLEMENTATION.
     lv_value = ip_value.
 
 
-    FIND REGEX `\s|'|-` IN lv_value.  " \s finds regular and white spaces
-    IF sy-subrc = 0.
-      REPLACE ALL OCCURRENCES OF `'` IN lv_value WITH `''`.
-      CONCATENATE `'` lv_value `'` INTO lv_value .
-    ENDIF.
+    find regex `\s|'|-` in lv_value.  " \s finds regular and white spaces
+    if sy-subrc = 0.
+      replace all occurrences of `'` in lv_value with `''`.
+      concatenate `'` lv_value `'` into lv_value .
+    endif.
 
     ep_escaped_value = lv_value.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD excel_string_to_date.
-    DATA: lv_date_int TYPE i.
-    DATA lv_error_text TYPE string.
+  method excel_string_to_date.
+    data: lv_date_int type i.
+    data lv_error_text type string.
 
-    CHECK ip_value IS NOT INITIAL AND ip_value CN ' 0'.
+    check ip_value is not initial and ip_value cn ' 0'.
 
-    TRY.
-        IF ip_exact = abap_false.
+    try.
+        if ip_exact = abap_false.
           lv_date_int = ip_value.
-        ELSE.
+        else.
           lv_date_int = trunc( ip_value ).
-        ENDIF.
-        IF lv_date_int NOT BETWEEN 1 AND 2958465.
+        endif.
+        if lv_date_int not between 1 and 2958465.
           zcx_excel=>raise_text( 'Unable to interpret date' ).
-        ENDIF.
+        endif.
         ep_value = lv_date_int + c_excel_baseline_date - 2.
         " Needed hack caused by the problem that:
         " Excel 2000 incorrectly assumes that the year 1900 is a leap year
         " http://support.microsoft.com/kb/214326/en-us
-        IF ep_value < c_excel_1900_leap_year.
+        if ep_value < c_excel_1900_leap_year.
           ep_value = ep_value + 1.
-        ENDIF.
-      CATCH cx_sy_conversion_error.
+        endif.
+      catch cx_sy_conversion_error.
         lv_error_text = |String "{ ip_value }" is not a valid Excel date|.
         zcx_excel=>raise_text( lv_error_text ).
-    ENDTRY.
-  ENDMETHOD.
+    endtry.
+  endmethod.
 
 
-  METHOD excel_string_to_number.
+  method excel_string_to_number.
 
 * If we encounter anything more complicated in EXCEL we might have to extend this
 * But currently this works fine - even for numbers in scientific notation
 
     ep_value = ip_value.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD excel_string_to_time.
-    DATA: lv_seconds_in_day TYPE i,
-          lv_day_fraction   TYPE f,
-          lc_seconds_in_day TYPE i VALUE 86400.
+  method excel_string_to_time.
+    data: lv_seconds_in_day type i,
+          lv_day_fraction   type f,
+          lc_seconds_in_day type i value 86400.
 
-    TRY.
+    try.
 
         lv_day_fraction = frac( ip_value ).
         lv_seconds_in_day = lv_day_fraction * lc_seconds_in_day.
 
         ep_value = lv_seconds_in_day.
 
-      CATCH cx_sy_conversion_error.
+      catch cx_sy_conversion_error.
         zcx_excel=>raise_text( 'Unable to interpret time' ).
-    ENDTRY.
-  ENDMETHOD.
+    endtry.
+  endmethod.
+
+  method get_fieldcatalog.
+    data lo_tabledescr type ref to cl_abap_tabledescr.
+    data lo_strucdescr type ref to cl_abap_structdescr.
+
+    lo_tabledescr ?= cl_abap_tabledescr=>describe_by_data( ip_table ).
+    lo_strucdescr ?= lo_tabledescr->get_table_line_type( ).
+    loop at lo_strucdescr->components into data(ls_comp).
+      append value #( fieldname = ls_comp-name
+                      scrtext_l = ls_comp-name
+                      position  = lines( ep_fieldcatalog ) + 1
+                      abap_type = ls_comp-type_kind )
+             to ep_fieldcatalog.
+    endloop.
+  endmethod.
 
 
-  METHOD get_fieldcatalog.
-"@TODO: Juwin to throw error
-*    DATA: lr_dref_tab           TYPE REF TO data,
-*          lo_salv_table         TYPE REF TO cl_salv_table,
-*          lo_salv_columns_table TYPE REF TO cl_salv_columns_table,
-*          lt_salv_t_column_ref  TYPE salv_t_column_ref,
-*          ls_salv_t_column_ref  LIKE LINE OF lt_salv_t_column_ref,
-*          lo_salv_column_table  TYPE REF TO cl_salv_column_table.
-*
-*    FIELD-SYMBOLS: <tab>          TYPE STANDARD TABLE.
-*    FIELD-SYMBOLS: <fcat>         LIKE LINE OF ep_fieldcatalog.
-*
-** Get copy of IP_TABLE-structure <-- must be changeable to create salv
-*    CREATE DATA lr_dref_tab LIKE ip_table.
-*    ASSIGN lr_dref_tab->* TO <tab>.
-** Create salv --> implicitly create fieldcat
-*    TRY.
-*        cl_salv_table=>factory( IMPORTING
-*                                  r_salv_table   = lo_salv_table
-*                                CHANGING
-*                                  t_table        = <tab>  ).
-*        lo_salv_columns_table = lo_salv_table->get_columns( ).
-*        lt_salv_t_column_ref  = lo_salv_columns_table->get( ).
-*      CATCH cx_root.
-** maybe some errorhandling here - just haven't made up my mind yet
-*    ENDTRY.
-*
-** Loop through columns and set relevant fields ( fieldname, texts )
-*    LOOP AT lt_salv_t_column_ref INTO ls_salv_t_column_ref.
-*
-*      lo_salv_column_table ?= ls_salv_t_column_ref-r_column.
-*      APPEND INITIAL LINE TO ep_fieldcatalog ASSIGNING <fcat>.
-*      <fcat>-position  = sy-tabix.
-*      <fcat>-fieldname = ls_salv_t_column_ref-columnname.
-*      <fcat>-scrtext_s = ls_salv_t_column_ref-r_column->get_short_text( ).
-*      <fcat>-scrtext_m = ls_salv_t_column_ref-r_column->get_medium_text( ).
-*      <fcat>-scrtext_l = ls_salv_t_column_ref-r_column->get_long_text( ).
-*      <fcat>-currency_column = ls_salv_t_column_ref-r_column->get_currency_column( ).
-*      " If currency column not in structure then clear the field again
-*      IF <fcat>-currency_column IS NOT INITIAL.
-*        READ TABLE lt_salv_t_column_ref WITH KEY columnname = <fcat>-currency_column TRANSPORTING NO FIELDS.
-*        IF sy-subrc <> 0.
-*          CLEAR <fcat>-currency_column.
-*        ENDIF.
-*      ENDIF.
-*
-*      IF ip_conv_exit_length = abap_false.
-*        <fcat>-abap_type = lo_salv_column_table->get_ddic_inttype( ).
-*      ENDIF.
-*
-*      <fcat>-dynpfld   = 'X'.  " What in the world would we exclude here?
-*      " except for the MANDT-field of most tables ( 1st column that is )
-*      IF <fcat>-position = 1 AND lo_salv_column_table->get_ddic_datatype( ) = 'CLNT' AND iv_hide_mandt = abap_true.
-*        CLEAR <fcat>-dynpfld.
-*      ENDIF.
-*
-** For fields that don't a description (  i.e. defined by  "field type i," )
-** just use the fieldname as description - that is better than nothing
-*      IF    <fcat>-scrtext_s IS INITIAL
-*        AND <fcat>-scrtext_m IS INITIAL
-*        AND <fcat>-scrtext_l IS INITIAL.
-*        CONCATENATE 'Col:' <fcat>-fieldname INTO <fcat>-scrtext_l  SEPARATED BY space.
-*        <fcat>-scrtext_m = <fcat>-scrtext_l.
-*        <fcat>-scrtext_s = <fcat>-scrtext_l.
-*      ENDIF.
-*
-*    ENDLOOP.
-
-  ENDMETHOD.
-
-
-  METHOD is_cell_in_range.
-    DATA lv_column_start    type zif_excel_data_decl=>zexcel_cell_column_alpha.
-    DATA lv_column_end      type zif_excel_data_decl=>zexcel_cell_column_alpha.
-    DATA lv_row_start       type zif_excel_data_decl=>zexcel_cell_row.
-    DATA lv_row_end         type zif_excel_data_decl=>zexcel_cell_row.
-    DATA lv_column_start_i  type zif_excel_data_decl=>zexcel_cell_column.
-    DATA lv_column_end_i    type zif_excel_data_decl=>zexcel_cell_column.
-    DATA lv_column_i        type zif_excel_data_decl=>zexcel_cell_column.
+  method is_cell_in_range.
+    data lv_column_start    type zif_excel_data_decl=>zexcel_cell_column_alpha.
+    data lv_column_end      type zif_excel_data_decl=>zexcel_cell_column_alpha.
+    data lv_row_start       type zif_excel_data_decl=>zexcel_cell_row.
+    data lv_row_end         type zif_excel_data_decl=>zexcel_cell_row.
+    data lv_column_start_i  type zif_excel_data_decl=>zexcel_cell_column.
+    data lv_column_end_i    type zif_excel_data_decl=>zexcel_cell_column.
+    data lv_column_i        type zif_excel_data_decl=>zexcel_cell_column.
 
 
 * Split range and convert columns
     convert_range2column_a_row(
-      EXPORTING
+      exporting
         i_range        = ip_range
-      IMPORTING
+      importing
         e_column_start = lv_column_start
         e_column_end   = lv_column_end
         e_row_start    = lv_row_start
@@ -1035,185 +881,190 @@ CLASS zcl_excel_common IMPLEMENTATION.
     lv_column_i = convert_column2int( ip_column = ip_column ).
 
 * Check if cell is in range
-    IF lv_column_i >= lv_column_start_i AND
-       lv_column_i <= lv_column_end_i   AND
-       ip_row      >= lv_row_start      AND
+    if lv_column_i >= lv_column_start_i and
+       lv_column_i <= lv_column_end_i   and
+       ip_row      >= lv_row_start      and
        ip_row      <= lv_row_end.
       rp_in_range = abap_true.
-    ENDIF.
-  ENDMETHOD.
+    endif.
+  endmethod.
 
 
-  METHOD number_to_excel_string.
-    DATA: lv_value_c TYPE c LENGTH 100.
+  method number_to_excel_string.
+    data: lv_value_c type c length 100.
 
-    IF ip_currency IS INITIAL.
-      lv_value_c = ip_value.
-      "WRITE ip_value TO lv_value_c EXPONENT 0 NO-GROUPING NO-SIGN.
-    ELSE.
+    if ip_currency is not initial.
+      if lt_currs is initial.
+        select currency, decimals from i_currency order by currency into table @lt_currs.
+      endif.
       lv_value_c = |{ ip_value currency = ip_currency }|.
-      "WRITE ip_value TO lv_value_c EXPONENT 0 NO-GROUPING NO-SIGN CURRENCY ip_currency.
-    ENDIF.
-    REPLACE ALL OCCURRENCES OF ',' IN lv_value_c WITH '.'.
+    elseif ip_unitofmeasure is not initial.
+      if lt_uoms is initial.
+        select unitofmeasure, unitofmeasurenumberofdecimals, UnitOfMeasure_E from i_unitofmeasure order by unitofmeasure into table @lt_uoms.
+      endif.
+      read table lt_uoms into data(ls_uom) with key uom = ip_unitofmeasure binary search.
+      lv_value_c = |{ ip_value decimals = ls_uom-dec }|.
+    else.
+      lv_value_c = ip_value.
+    endif.
+    replace all occurrences of ',' in lv_value_c with '.'.
 
     ep_value = lv_value_c.
-    CONDENSE ep_value.
+    condense ep_value.
 
-    IF ip_value < 0.
-      CONCATENATE '-' ep_value INTO ep_value.
-    ELSEIF ip_value EQ 0.
+    if ip_value eq 0.
       ep_value = '0'.
-    ENDIF.
-  ENDMETHOD.
+    endif.
+  endmethod.
 
 
-  METHOD recursive_class_to_struct.
+  method recursive_class_to_struct.
     " # issue 139
 * is working for me - but after looking through this coding I guess
 * I'll rewrite this to a version w/o recursion
 * This is private an no one using it so far except me, so no need to hurry
-    DATA: descr          TYPE REF TO cl_abap_structdescr,
-          wa_component   LIKE LINE OF descr->components,
-          attribute_name LIKE wa_component-name,
-          flag_class     TYPE abap_bool.
+    data: descr          type ref to cl_abap_structdescr,
+          wa_component   like line of descr->components,
+          attribute_name like wa_component-name,
+          flag_class     type abap_bool.
 
-    FIELD-SYMBOLS: <field>     TYPE any,
-                   <fieldx>    TYPE any,
-                   <attribute> TYPE any.
+    field-symbols: <field>     type any,
+                   <fieldx>    type any,
+                   <attribute> type any.
 
 
     descr ?= cl_abap_structdescr=>describe_by_data( e_target ).
 
-    LOOP AT descr->components INTO wa_component.
+    loop at descr->components into wa_component.
 
 * Assign structure and X-structure
-      ASSIGN COMPONENT wa_component-name OF STRUCTURE e_target  TO <field>.
-      ASSIGN COMPONENT wa_component-name OF STRUCTURE e_targetx TO <fieldx>.
+      assign component wa_component-name of structure e_target  to <field>.
+      assign component wa_component-name of structure e_targetx to <fieldx>.
 * At least one field in the structure should be marked - otherwise continue with next field
-      CLEAR flag_class.
+      clear flag_class.
 * maybe source is just a structure - try assign component...
-      ASSIGN COMPONENT wa_component-name OF STRUCTURE i_source  TO <attribute>.
-      IF sy-subrc <> 0.
+      assign component wa_component-name of structure i_source  to <attribute>.
+      if sy-subrc <> 0.
 * not - then it is an attribute of the class - use different assign then
-        CONCATENATE 'i_source->' wa_component-name INTO attribute_name.
-        ASSIGN (attribute_name) TO <attribute>.
-        IF sy-subrc <> 0.
-          EXIT.
-        ENDIF.  " Should not happen if structure is built properly - otherwise just exit to create no dumps
+        concatenate 'i_source->' wa_component-name into attribute_name.
+        assign (attribute_name) to <attribute>.
+        if sy-subrc <> 0.
+          exit.
+        endif.  " Should not happen if structure is built properly - otherwise just exit to create no dumps
         flag_class = abap_true.
-      ENDIF.
+      endif.
 
-      CASE wa_component-type_kind.
-        WHEN cl_abap_structdescr=>typekind_struct1 OR cl_abap_structdescr=>typekind_struct2.  " Structure --> use recursio
-          zcl_excel_common=>recursive_class_to_struct( EXPORTING i_source  = <attribute>
-                                                       CHANGING  e_target  = <field>
+      case wa_component-type_kind.
+        when cl_abap_structdescr=>typekind_struct1 or cl_abap_structdescr=>typekind_struct2.  " Structure --> use recursio
+          zcl_excel_common=>recursive_class_to_struct( exporting i_source  = <attribute>
+                                                       changing  e_target  = <field>
                                                                  e_targetx = <fieldx> ).
-        WHEN OTHERS.
+        when others.
           <field> = <attribute>.
           <fieldx> = abap_true.
 
-      ENDCASE.
-    ENDLOOP.
+      endcase.
+    endloop.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD recursive_struct_to_class.
+  method recursive_struct_to_class.
     " # issue 139
 * is working for me - but after looking through this coding I guess
 * I'll rewrite this to a version w/o recursion
 * This is private an no one using it so far except me, so no need to hurry
-    DATA: descr          TYPE REF TO cl_abap_structdescr,
-          wa_component   LIKE LINE OF descr->components,
-          attribute_name LIKE wa_component-name,
-          flag_class     TYPE abap_bool,
-          o_border       TYPE REF TO zcl_excel_style_border.
+    data: descr          type ref to cl_abap_structdescr,
+          wa_component   like line of descr->components,
+          attribute_name like wa_component-name,
+          flag_class     type abap_bool,
+          o_border       type ref to zcl_excel_style_border.
 
-    FIELD-SYMBOLS: <field>     TYPE any,
-                   <fieldx>    TYPE any,
-                   <attribute> TYPE any.
+    field-symbols: <field>     type any,
+                   <fieldx>    type any,
+                   <attribute> type any.
 
 
     descr ?= cl_abap_structdescr=>describe_by_data( i_source ).
 
-    LOOP AT descr->components INTO wa_component.
+    loop at descr->components into wa_component.
 
 * Assign structure and X-structure
-      ASSIGN COMPONENT wa_component-name OF STRUCTURE i_source  TO <field>.
-      ASSIGN COMPONENT wa_component-name OF STRUCTURE i_sourcex TO <fieldx>.
+      assign component wa_component-name of structure i_source  to <field>.
+      assign component wa_component-name of structure i_sourcex to <fieldx>.
 * At least one field in the structure should be marked - otherwise continue with next field
-      CHECK <fieldx> CA abap_true.
-      CLEAR flag_class.
+      check <fieldx> ca abap_true.
+      clear flag_class.
 * maybe target is just a structure - try assign component...
-      ASSIGN COMPONENT wa_component-name OF STRUCTURE e_target  TO <attribute>.
-      IF sy-subrc <> 0.
+      assign component wa_component-name of structure e_target  to <attribute>.
+      if sy-subrc <> 0.
 * not - then it is an attribute of the class - use different assign then
-        CONCATENATE 'E_TARGET->' wa_component-name INTO attribute_name.
-        ASSIGN (attribute_name) TO <attribute>.
-        IF sy-subrc <> 0.EXIT.ENDIF.  " Should not happen if structure is built properly - otherwise just exit to create no dumps
+        concatenate 'E_TARGET->' wa_component-name into attribute_name.
+        assign (attribute_name) to <attribute>.
+        if sy-subrc <> 0.exit.endif.  " Should not happen if structure is built properly - otherwise just exit to create no dumps
         flag_class = abap_true.
-      ENDIF.
+      endif.
 
-      CASE wa_component-type_kind.
-        WHEN cl_abap_structdescr=>typekind_struct1 OR cl_abap_structdescr=>typekind_struct2.  " Structure --> use recursion
+      case wa_component-type_kind.
+        when cl_abap_structdescr=>typekind_struct1 or cl_abap_structdescr=>typekind_struct2.  " Structure --> use recursion
           " To avoid dump with attribute GRADTYPE of class ZCL_EXCEL_STYLE_FILL
           " quick and really dirty fix -> check the attribute name
           " Border has to be initialized somewhere else
-          IF wa_component-name EQ 'GRADTYPE'.
+          if wa_component-name eq 'GRADTYPE'.
             flag_class = abap_false.
-          ENDIF.
+          endif.
 
-          IF flag_class = abap_true AND <attribute> IS INITIAL.
+          if flag_class = abap_true and <attribute> is initial.
 * Only borders will be passed as unbound references.  But since we want to set a value we have to create an instance
-            CREATE OBJECT o_border.
+            create object o_border.
             <attribute> = o_border.
-          ENDIF.
-          zcl_excel_common=>recursive_struct_to_class( EXPORTING i_source  = <field>
+          endif.
+          zcl_excel_common=>recursive_struct_to_class( exporting i_source  = <field>
                                                                  i_sourcex = <fieldx>
-                                                       CHANGING  e_target  = <attribute> ).
-        WHEN OTHERS.
-          CHECK <fieldx> = abap_true.  " Marked for change
+                                                       changing  e_target  = <attribute> ).
+        when others.
+          check <fieldx> = abap_true.  " Marked for change
           <attribute> = <field>.
 
-      ENDCASE.
-    ENDLOOP.
+      endcase.
+    endloop.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD shift_formula.
+  method shift_formula.
 
-    CONSTANTS: lcv_operators            TYPE string VALUE '+-/*^%=<>&, !',
-               lcv_letters              TYPE string VALUE 'ABCDEFGHIJKLMNOPQRSTUVWXYZ$',
-               lcv_digits               TYPE string VALUE '0123456789',
-               lcv_cell_reference_error TYPE string VALUE '#REF!'.
+    constants: lcv_operators            type string value '+-/*^%=<>&, !',
+               lcv_letters              type string value 'ABCDEFGHIJKLMNOPQRSTUVWXYZ$',
+               lcv_digits               type string value '0123456789',
+               lcv_cell_reference_error type string value '#REF!'.
 
-    DATA: lv_tcnt          TYPE i,         " Counter variable
-          lv_tlen          TYPE i,         " Temp variable length
-          lv_cnt           TYPE i,         " Counter variable
-          lv_cnt2          TYPE i,         " Counter variable
-          lv_offset1       TYPE i,         " Character offset
-          lv_numchars      TYPE i,         " Number of characters counter
-          lv_tchar(1)      TYPE c,         " Temp character
-          lv_tchar2(1)     TYPE c,         " Temp character
-          lv_cur_form      TYPE string,    " Formula for current cell
-          lv_ref_cell_addr TYPE string,    " Reference cell address
-          lv_tcol1         TYPE string,    " Temp column letter
-          lv_tcol2         TYPE string,    " Temp column letter
-          lv_tcoln         TYPE i,         " Temp column number
-          lv_trow1         TYPE string,    " Temp row number
-          lv_trow2         TYPE string,    " Temp row number
-          lv_flen          TYPE i,         " Length of reference formula
-          lv_tlen2         TYPE i,         " Temp variable length
-          lv_substr1       TYPE string,    " Substring variable
-          lv_abscol        TYPE string,    " Absolute column symbol
-          lv_absrow        TYPE string,    " Absolute row symbol
-          lv_ref_formula   TYPE string,
-          lv_compare_1     TYPE string,
-          lv_compare_2     TYPE string,
-          lv_level         TYPE i,         " Level of groups [..[..]..] or {..}
+    data: lv_tcnt          type i,         " Counter variable
+          lv_tlen          type i,         " Temp variable length
+          lv_cnt           type i,         " Counter variable
+          lv_cnt2          type i,         " Counter variable
+          lv_offset1       type i,         " Character offset
+          lv_numchars      type i,         " Number of characters counter
+          lv_tchar(1)      type c,         " Temp character
+          lv_tchar2(1)     type c,         " Temp character
+          lv_cur_form      type string,    " Formula for current cell
+          lv_ref_cell_addr type string,    " Reference cell address
+          lv_tcol1         type string,    " Temp column letter
+          lv_tcol2         type string,    " Temp column letter
+          lv_tcoln         type i,         " Temp column number
+          lv_trow1         type string,    " Temp row number
+          lv_trow2         type string,    " Temp row number
+          lv_flen          type i,         " Length of reference formula
+          lv_tlen2         type i,         " Temp variable length
+          lv_substr1       type string,    " Substring variable
+          lv_abscol        type string,    " Absolute column symbol
+          lv_absrow        type string,    " Absolute row symbol
+          lv_ref_formula   type string,
+          lv_compare_1     type string,
+          lv_compare_2     type string,
+          lv_level         type i,         " Level of groups [..[..]..] or {..}
 
-          lv_errormessage  TYPE string.
+          lv_errormessage  type string.
 
 *--------------------------------------------------------------------*
 * When copying a cell in EXCEL to another cell any inherent formulas
@@ -1230,11 +1081,11 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *--------------------------------------------------------------------*
 * No distance --> Reference = resulting cell/formula
 *--------------------------------------------------------------------*
-    IF    iv_shift_cols = 0
-      AND iv_shift_rows = 0.
+    if    iv_shift_cols = 0
+      and iv_shift_rows = 0.
       ev_resulting_formula = lv_ref_formula.
-      RETURN. " done
-    ENDIF.
+      return. " done
+    endif.
 
 
     lv_flen     = strlen( lv_ref_formula ).
@@ -1243,15 +1094,15 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *--------------------------------------------------------------------*
 * §1 Parse reference formula character by character
 *--------------------------------------------------------------------*
-    DO lv_flen TIMES.
+    do lv_flen times.
 
-      CLEAR: lv_tchar,
+      clear: lv_tchar,
              lv_substr1,
              lv_ref_cell_addr.
       lv_cnt2 = lv_cnt + 1.
-      IF lv_cnt2 > lv_flen.
-        EXIT. " Done
-      ENDIF.
+      if lv_cnt2 > lv_flen.
+        exit. " Done
+      endif.
 
 *--------------------------------------------------------------------*
 * Here we have the current character in the formula
@@ -1261,44 +1112,44 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *--------------------------------------------------------------------*
 * Operators or opening parenthesis will separate possible cellreferences
 *--------------------------------------------------------------------*
-      IF    (    lv_tchar CA lcv_operators
-              OR lv_tchar CA '(' )
-        AND lv_cnt2 = 1.
+      if    (    lv_tchar ca lcv_operators
+              or lv_tchar ca '(' )
+        and lv_cnt2 = 1.
         lv_substr1  = lv_ref_formula+lv_offset1(1).
-        CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+        concatenate lv_cur_form lv_substr1 into lv_cur_form.
         lv_cnt      = lv_cnt + 1.
         lv_offset1  = lv_cnt.
         lv_numchars = 1.
-        CONTINUE.       " --> next character in formula can be analyzed
-      ENDIF.
+        continue.       " --> next character in formula can be analyzed
+      endif.
 
 *--------------------------------------------------------------------*
 * Quoted literal text holds no cell reference --> advance to end of text
 *--------------------------------------------------------------------*
-      IF lv_tchar EQ '"'.
+      if lv_tchar eq '"'.
         lv_cnt      = lv_cnt + 1.
         lv_numchars = lv_numchars + 1.
         lv_tchar     = lv_ref_formula+lv_cnt(1).
-        WHILE lv_tchar NE '"'.
+        while lv_tchar ne '"'.
 
           lv_cnt      = lv_cnt + 1.
           lv_numchars = lv_numchars + 1.
           lv_tchar    = lv_ref_formula+lv_cnt(1).
 
-        ENDWHILE.
+        endwhile.
         lv_cnt2    = lv_cnt + 1.
         lv_substr1 = lv_ref_formula+lv_offset1(lv_numchars).
-        CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+        concatenate lv_cur_form lv_substr1 into lv_cur_form.
         lv_cnt     = lv_cnt + 1.
-        IF lv_cnt = lv_flen.
-          EXIT.
-        ENDIF.
+        if lv_cnt = lv_flen.
+          exit.
+        endif.
         lv_offset1  = lv_cnt.
         lv_numchars = 1.
         lv_tchar    = lv_ref_formula+lv_cnt(1).
         lv_cnt2     = lv_cnt + 1.
-        CONTINUE.       " --> next character in formula can be analyzed
-      ENDIF.
+        continue.       " --> next character in formula can be analyzed
+      endif.
 
 
 *--------------------------------------------------------------------*
@@ -1308,191 +1159,191 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *     Array constants: {1,3.5,TRUE,"Hello"}
 *     "Intra table reference": Flights[[#This Row],[Air fare]]
 *--------------------------------------------------------------------*
-      IF lv_tchar CA '[]{}' OR lv_level > 0.
-        IF lv_tchar CA '[{'.
+      if lv_tchar ca '[]{}' or lv_level > 0.
+        if lv_tchar ca '[{'.
           lv_level = lv_level + 1.
-        ELSEIF lv_tchar CA ']}'.
+        elseif lv_tchar ca ']}'.
           lv_level = lv_level - 1.
-        ENDIF.
-        IF lv_cnt2 = lv_flen.
+        endif.
+        if lv_cnt2 = lv_flen.
           lv_substr1 = iv_reference_formula+lv_offset1(lv_numchars).
-          CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
-          EXIT.
-        ENDIF.
+          concatenate lv_cur_form lv_substr1 into lv_cur_form.
+          exit.
+        endif.
         lv_numchars = lv_numchars + 1.
         lv_cnt   = lv_cnt   + 1.
         lv_cnt2  = lv_cnt   + 1.
-        CONTINUE.
-      ENDIF.
+        continue.
+      endif.
 
 *--------------------------------------------------------------------*
 * Operators or parenthesis or last character in formula will separate possible cellreferences
 *--------------------------------------------------------------------*
-      IF   lv_tchar CA lcv_operators
-        OR lv_tchar CA '():'
-        OR lv_cnt2  =  lv_flen.
-        IF lv_cnt > 0.
+      if   lv_tchar ca lcv_operators
+        or lv_tchar ca '():'
+        or lv_cnt2  =  lv_flen.
+        if lv_cnt > 0.
           lv_substr1 = lv_ref_formula+lv_offset1(lv_numchars).
 *--------------------------------------------------------------------*
 * Check for text concatenation and functions
 *--------------------------------------------------------------------*
-          IF ( lv_tchar CA lcv_operators AND lv_tchar EQ lv_substr1 ) OR lv_tchar EQ '('.
-            CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+          if ( lv_tchar ca lcv_operators and lv_tchar eq lv_substr1 ) or lv_tchar eq '('.
+            concatenate lv_cur_form lv_substr1 into lv_cur_form.
             lv_cnt = lv_cnt + 1.
             lv_offset1 = lv_cnt.
             lv_cnt2 = lv_cnt + 1.
             lv_numchars = 1.
-            CONTINUE.       " --> next character in formula can be analyzed
-          ENDIF.
+            continue.       " --> next character in formula can be analyzed
+          endif.
 
           lv_tlen = lv_cnt2 - lv_offset1.
 *--------------------------------------------------------------------*
 * Exclude mathematical operators and closing parentheses
 *--------------------------------------------------------------------*
-          IF   lv_tchar CA lcv_operators
-            OR lv_tchar CA ':)'.
-            IF    lv_cnt2     = lv_flen
-              AND lv_numchars = 1.
-              CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+          if   lv_tchar ca lcv_operators
+            or lv_tchar ca ':)'.
+            if    lv_cnt2     = lv_flen
+              and lv_numchars = 1.
+              concatenate lv_cur_form lv_substr1 into lv_cur_form.
               lv_cnt      = lv_cnt + 1.
               lv_offset1  = lv_cnt.
               lv_cnt2     = lv_cnt + 1.
               lv_numchars = 1.
-              CONTINUE.       " --> next character in formula can be analyzed
-            ELSE.
+              continue.       " --> next character in formula can be analyzed
+            else.
               lv_tlen = lv_tlen - 1.
-            ENDIF.
-          ENDIF.
+            endif.
+          endif.
 *--------------------------------------------------------------------*
 * Capture reference cell address
 *--------------------------------------------------------------------*
-          TRY.
+          try.
               lv_ref_cell_addr = lv_ref_formula+lv_offset1(lv_tlen). "Ref cell address
-            CATCH cx_root.
+            catch cx_root.
               lv_errormessage = 'Internal error in Class ZCL_EXCEL_COMMON Method SHIFT_FORMULA Spot 1 '.  " Change to messageclass if possible
               zcx_excel=>raise_text( lv_errormessage ).
-          ENDTRY.
+          endtry.
 
 *--------------------------------------------------------------------*
 * Split cell address into characters and numbers
 *--------------------------------------------------------------------*
-          CLEAR: lv_tlen,
+          clear: lv_tlen,
                  lv_tcnt,
                  lv_tcol1,
                  lv_trow1.
           lv_tlen = strlen( lv_ref_cell_addr ).
-          IF lv_tlen <> 0.
-            CLEAR: lv_tcnt.
-            DO lv_tlen TIMES.
-              CLEAR: lv_tchar2.
+          if lv_tlen <> 0.
+            clear: lv_tcnt.
+            do lv_tlen times.
+              clear: lv_tchar2.
               lv_tchar2 = lv_ref_cell_addr+lv_tcnt(1).
-              IF lv_tchar2 CA lcv_letters.
-                CONCATENATE lv_tcol1 lv_tchar2 INTO lv_tcol1.
-              ELSEIF lv_tchar2 CA lcv_digits.
-                CONCATENATE lv_trow1 lv_tchar2 INTO lv_trow1.
-              ENDIF.
+              if lv_tchar2 ca lcv_letters.
+                concatenate lv_tcol1 lv_tchar2 into lv_tcol1.
+              elseif lv_tchar2 ca lcv_digits.
+                concatenate lv_trow1 lv_tchar2 into lv_trow1.
+              endif.
               lv_tcnt = lv_tcnt + 1.
-            ENDDO.
-          ENDIF.
+            enddo.
+          endif.
 
           " Is valid column & row ?
-          IF lv_tcol1 IS NOT INITIAL AND lv_trow1 IS NOT INITIAL.
+          if lv_tcol1 is not initial and lv_trow1 is not initial.
             " COLUMN + ROW
-            CONCATENATE lv_tcol1 lv_trow1 INTO lv_compare_1.
+            concatenate lv_tcol1 lv_trow1 into lv_compare_1.
             " Original condensed string
             lv_compare_2 = lv_ref_cell_addr.
-            CONDENSE lv_compare_2.
-            IF lv_compare_1 <> lv_compare_2.
-              CLEAR: lv_trow1, lv_tchar2.
-            ENDIF.
-          ENDIF.
+            condense lv_compare_2.
+            if lv_compare_1 <> lv_compare_2.
+              clear: lv_trow1, lv_tchar2.
+            endif.
+          endif.
 
 *--------------------------------------------------------------------*
 * Check for invalid cell address
 *--------------------------------------------------------------------*
-          IF lv_tcol1 IS INITIAL OR lv_trow1 IS INITIAL.
-            CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+          if lv_tcol1 is initial or lv_trow1 is initial.
+            concatenate lv_cur_form lv_substr1 into lv_cur_form.
             lv_cnt = lv_cnt + 1.
             lv_offset1 = lv_cnt.
             lv_cnt2 = lv_cnt + 1.
             lv_numchars = 1.
-            CONTINUE.
-          ENDIF.
+            continue.
+          endif.
 *--------------------------------------------------------------------*
 * Check for range names
 *--------------------------------------------------------------------*
-          CLEAR: lv_tlen.
+          clear: lv_tlen.
           lv_tlen = strlen( lv_tcol1 ).
-          IF lv_tlen GT 3.
-            CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+          if lv_tlen gt 3.
+            concatenate lv_cur_form lv_substr1 into lv_cur_form.
             lv_cnt = lv_cnt + 1.
             lv_offset1 = lv_cnt.
             lv_cnt2 = lv_cnt + 1.
             lv_numchars = 1.
-            CONTINUE.
-          ENDIF.
+            continue.
+          endif.
 *--------------------------------------------------------------------*
 * Check for valid row
 *--------------------------------------------------------------------*
-          IF lv_trow1 GT 1048576.
-            CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+          if lv_trow1 gt 1048576.
+            concatenate lv_cur_form lv_substr1 into lv_cur_form.
             lv_cnt = lv_cnt + 1.
             lv_offset1 = lv_cnt.
             lv_cnt2 = lv_cnt + 1.
             lv_numchars = 1.
-            CONTINUE.
-          ENDIF.
+            continue.
+          endif.
 *--------------------------------------------------------------------*
 * Check for absolute column or row reference
 *--------------------------------------------------------------------*
-          CLEAR: lv_tcol2,
+          clear: lv_tcol2,
                  lv_trow2,
                  lv_abscol,
                  lv_absrow.
           lv_tlen2 = strlen( lv_tcol1 ) - 1.
-          IF lv_tcol1 IS NOT INITIAL.
+          if lv_tcol1 is not initial.
             lv_abscol = lv_tcol1(1).
-          ENDIF.
-          IF lv_tlen2 GE 0.
+          endif.
+          if lv_tlen2 ge 0.
             lv_absrow = lv_tcol1+lv_tlen2(1).
-          ENDIF.
-          IF lv_abscol EQ '$' AND lv_absrow EQ '$'.
+          endif.
+          if lv_abscol eq '$' and lv_absrow eq '$'.
             lv_tlen2 = lv_tlen2 - 1.
-            IF lv_tlen2 > 0.
+            if lv_tlen2 > 0.
               lv_tcol1 = lv_tcol1+1(lv_tlen2).
-            ENDIF.
+            endif.
             lv_tlen2 = lv_tlen2 + 1.
-          ELSEIF lv_abscol EQ '$'.
+          elseif lv_abscol eq '$'.
             lv_tcol1 = lv_tcol1+1(lv_tlen2).
-          ELSEIF lv_absrow EQ '$'.
+          elseif lv_absrow eq '$'.
             lv_tcol1 = lv_tcol1(lv_tlen2).
-          ENDIF.
+          endif.
 *--------------------------------------------------------------------*
 * Check for valid column
 *--------------------------------------------------------------------*
-          TRY.
+          try.
               lv_tcoln = zcl_excel_common=>convert_column2int( lv_tcol1 ) + iv_shift_cols.
-            CATCH zcx_excel.
-              CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+            catch zcx_excel.
+              concatenate lv_cur_form lv_substr1 into lv_cur_form.
               lv_cnt = lv_cnt + 1.
               lv_offset1 = lv_cnt.
               lv_cnt2 = lv_cnt + 1.
               lv_numchars = 1.
-              CONTINUE.
-          ENDTRY.
+              continue.
+          endtry.
 *--------------------------------------------------------------------*
 * Check whether there is a referencing problem
 *--------------------------------------------------------------------*
           lv_trow2 = lv_trow1 + iv_shift_rows.
           " Remove the space used for the sign
-          CONDENSE lv_trow2.
-          IF   ( lv_tcoln < 1 AND lv_abscol <> '$' )   " Maybe we should add here max-column and max row-tests as well.
-            OR ( lv_trow2 < 1 AND lv_absrow <> '$' ).  " Check how EXCEL behaves in this case
+          condense lv_trow2.
+          if   ( lv_tcoln < 1 and lv_abscol <> '$' )   " Maybe we should add here max-column and max row-tests as well.
+            or ( lv_trow2 < 1 and lv_absrow <> '$' ).  " Check how EXCEL behaves in this case
 *--------------------------------------------------------------------*
 * Referencing problem encountered --> set error
 *--------------------------------------------------------------------*
-            CONCATENATE lv_cur_form lcv_cell_reference_error INTO lv_cur_form.
-          ELSE.
+            concatenate lv_cur_form lcv_cell_reference_error into lv_cur_form.
+          else.
 *--------------------------------------------------------------------*
 * No referencing problems --> adjust row and column
 *--------------------------------------------------------------------*
@@ -1500,200 +1351,200 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *--------------------------------------------------------------------*
 * Adjust column
 *--------------------------------------------------------------------*
-            IF lv_abscol EQ '$'.
-              CONCATENATE lv_cur_form lv_abscol lv_tcol1 INTO lv_cur_form.
-            ELSEIF iv_shift_cols EQ 0.
-              CONCATENATE lv_cur_form lv_tcol1 INTO lv_cur_form.
-            ELSE.
-              TRY.
+            if lv_abscol eq '$'.
+              concatenate lv_cur_form lv_abscol lv_tcol1 into lv_cur_form.
+            elseif iv_shift_cols eq 0.
+              concatenate lv_cur_form lv_tcol1 into lv_cur_form.
+            else.
+              try.
                   lv_tcol2 = zcl_excel_common=>convert_column2alpha( lv_tcoln ).
-                  CONCATENATE lv_cur_form lv_tcol2 INTO lv_cur_form.
-                CATCH zcx_excel.
-                  CONCATENATE lv_cur_form lv_substr1 INTO lv_cur_form.
+                  concatenate lv_cur_form lv_tcol2 into lv_cur_form.
+                catch zcx_excel.
+                  concatenate lv_cur_form lv_substr1 into lv_cur_form.
                   lv_cnt = lv_cnt + 1.
                   lv_offset1 = lv_cnt.
                   lv_cnt2 = lv_cnt + 1.
                   lv_numchars = 1.
-                  CONTINUE.
-              ENDTRY.
-            ENDIF.
+                  continue.
+              endtry.
+            endif.
 *--------------------------------------------------------------------*
 * Adjust row
 *--------------------------------------------------------------------*
-            IF lv_absrow EQ '$'.
-              CONCATENATE lv_cur_form lv_absrow lv_trow1 INTO lv_cur_form.
-            ELSEIF iv_shift_rows = 0.
-              CONCATENATE lv_cur_form lv_trow1 INTO lv_cur_form.
-            ELSE.
-              CONCATENATE lv_cur_form lv_trow2 INTO lv_cur_form.
-            ENDIF.
-          ENDIF.
+            if lv_absrow eq '$'.
+              concatenate lv_cur_form lv_absrow lv_trow1 into lv_cur_form.
+            elseif iv_shift_rows = 0.
+              concatenate lv_cur_form lv_trow1 into lv_cur_form.
+            else.
+              concatenate lv_cur_form lv_trow2 into lv_cur_form.
+            endif.
+          endif.
 
           lv_numchars = 0.
-          IF   lv_tchar CA lcv_operators
-            OR lv_tchar CA ':)'.
-            CONCATENATE lv_cur_form lv_tchar INTO lv_cur_form RESPECTING BLANKS.
-          ENDIF.
+          if   lv_tchar ca lcv_operators
+            or lv_tchar ca ':)'.
+            concatenate lv_cur_form lv_tchar into lv_cur_form respecting blanks.
+          endif.
           lv_offset1 = lv_cnt2.
-        ENDIF.
-      ENDIF.
+        endif.
+      endif.
       lv_numchars = lv_numchars + 1.
       lv_cnt   = lv_cnt   + 1.
       lv_cnt2  = lv_cnt   + 1.
 
-    ENDDO.
+    enddo.
 
 
 
 *--------------------------------------------------------------------*
 * Return resulting formula
 *--------------------------------------------------------------------*
-    IF lv_cur_form IS NOT INITIAL.
+    if lv_cur_form is not initial.
       ev_resulting_formula = lv_cur_form.
-    ENDIF.
+    endif.
 
-  ENDMETHOD.
-
-
-  METHOD shl01.
-
-    DATA:
-      lv_bit      TYPE i,
-      lv_curr_pos TYPE i VALUE 2,
-      lv_prev_pos TYPE i VALUE 1.
-
-    DO 15 TIMES.
-      GET BIT lv_curr_pos OF i_pwd_hash INTO lv_bit.
-      SET BIT lv_prev_pos OF r_pwd_hash TO lv_bit.
-      ADD 1 TO lv_curr_pos.
-      ADD 1 TO lv_prev_pos.
-    ENDDO.
-    SET BIT 16 OF r_pwd_hash TO 0.
-
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD shr14.
+  method shl01.
 
-    DATA:
-      lv_bit      TYPE i,
-      lv_curr_pos TYPE i,
-      lv_next_pos TYPE i.
+    data:
+      lv_bit      type i,
+      lv_curr_pos type i value 2,
+      lv_prev_pos type i value 1.
+
+    do 15 times.
+      get bit lv_curr_pos of i_pwd_hash into lv_bit.
+      set bit lv_prev_pos of r_pwd_hash to lv_bit.
+      add 1 to lv_curr_pos.
+      add 1 to lv_prev_pos.
+    enddo.
+    set bit 16 of r_pwd_hash to 0.
+
+  endmethod.
+
+
+  method shr14.
+
+    data:
+      lv_bit      type i,
+      lv_curr_pos type i,
+      lv_next_pos type i.
 
     r_pwd_hash = i_pwd_hash.
 
-    DO 14 TIMES.
+    do 14 times.
       lv_curr_pos = 15.
       lv_next_pos = 16.
 
-      DO 15 TIMES.
-        GET BIT lv_curr_pos OF r_pwd_hash INTO lv_bit.
-        SET BIT lv_next_pos OF r_pwd_hash TO lv_bit.
-        SUBTRACT 1 FROM lv_curr_pos.
-        SUBTRACT 1 FROM lv_next_pos.
-      ENDDO.
-      SET BIT 1 OF r_pwd_hash TO 0.
-    ENDDO.
+      do 15 times.
+        get bit lv_curr_pos of r_pwd_hash into lv_bit.
+        set bit lv_next_pos of r_pwd_hash to lv_bit.
+        subtract 1 from lv_curr_pos.
+        subtract 1 from lv_next_pos.
+      enddo.
+      set bit 1 of r_pwd_hash to 0.
+    enddo.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD split_file.
+  method split_file.
 
-    DATA: lt_hlp TYPE TABLE OF text255,
-          ls_hlp TYPE text255.
+    data: lt_hlp type table of text255,
+          ls_hlp type text255.
 
-    DATA: lf_ext(10)     TYPE c,
-          lf_dot_ext(10) TYPE c.
-    DATA: lf_anz TYPE i,
-          lf_len TYPE i.
+    data: lf_ext(10)     type c,
+          lf_dot_ext(10) type c.
+    data: lf_anz type i,
+          lf_len type i.
 ** ---------------------------------------------------------------------
 
-    CLEAR: lt_hlp,
+    clear: lt_hlp,
            ep_file,
            ep_extension,
            ep_dotextension.
 
 ** Split the whole file at '.'
-    SPLIT ip_file AT '.' INTO TABLE lt_hlp.
+    split ip_file at '.' into table lt_hlp.
 
 ** get the extenstion from the last line of table
     lf_anz = lines( lt_hlp ).
-    IF lf_anz <= 1.
+    if lf_anz <= 1.
       ep_file = ip_file.
-      RETURN.
-    ENDIF.
+      return.
+    endif.
 
-    READ TABLE lt_hlp INTO ls_hlp INDEX lf_anz.
+    read table lt_hlp into ls_hlp index lf_anz.
     ep_extension = ls_hlp.
     lf_ext =  ls_hlp.
-    IF NOT lf_ext IS INITIAL.
-      CONCATENATE '.' lf_ext INTO lf_dot_ext.
-    ENDIF.
+    if not lf_ext is initial.
+      concatenate '.' lf_ext into lf_dot_ext.
+    endif.
     ep_dotextension = lf_dot_ext.
 
 ** get only the filename
     lf_len = strlen( ip_file ) - strlen( lf_dot_ext ).
-    IF lf_len > 0.
+    if lf_len > 0.
       ep_file = ip_file(lf_len).
-    ENDIF.
+    endif.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD structure_case.
-    DATA: lt_comp_str        TYPE abap_component_tab.
+  method structure_case.
+    data: lt_comp_str        type abap_component_tab.
 
-    CASE is_component-type->kind.
-      WHEN cl_abap_typedescr=>kind_elem. "E Elementary Type
-        INSERT is_component INTO TABLE xt_components.
-      WHEN cl_abap_typedescr=>kind_table. "T Table
-        INSERT is_component INTO TABLE xt_components.
-      WHEN cl_abap_typedescr=>kind_struct. "S Structure
+    case is_component-type->kind.
+      when cl_abap_typedescr=>kind_elem. "E Elementary Type
+        insert is_component into table xt_components.
+      when cl_abap_typedescr=>kind_table. "T Table
+        insert is_component into table xt_components.
+      when cl_abap_typedescr=>kind_struct. "S Structure
         lt_comp_str = structure_recursive( is_component = is_component ).
-        INSERT LINES OF lt_comp_str INTO TABLE xt_components.
-      WHEN OTHERS. "cl_abap_typedescr=>kind_ref or  cl_abap_typedescr=>kind_class or  cl_abap_typedescr=>kind_intf.
+        insert lines of lt_comp_str into table xt_components.
+      when others. "cl_abap_typedescr=>kind_ref or  cl_abap_typedescr=>kind_class or  cl_abap_typedescr=>kind_intf.
 * We skip it. for now.
-    ENDCASE.
-  ENDMETHOD.
+    endcase.
+  endmethod.
 
 
-  METHOD structure_recursive.
-    DATA: lo_struct     TYPE REF TO cl_abap_structdescr,
-          lt_components TYPE abap_component_tab,
-          ls_components TYPE abap_componentdescr.
+  method structure_recursive.
+    data: lo_struct     type ref to cl_abap_structdescr,
+          lt_components type abap_component_tab,
+          ls_components type abap_componentdescr.
 
     lo_struct ?= is_component-type.
     lt_components = lo_struct->get_components( ).
 
-    LOOP AT lt_components INTO ls_components.
-      structure_case( EXPORTING is_component  = ls_components
-                      CHANGING  xt_components = rt_components ) .
-    ENDLOOP.
+    loop at lt_components into ls_components.
+      structure_case( exporting is_component  = ls_components
+                      changing  xt_components = rt_components ) .
+    endloop.
 
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD time_to_excel_string.
-    DATA: lv_seconds_in_day TYPE i,
-          lv_day_fraction   TYPE f,
-          lc_time_baseline  TYPE t VALUE '000000',
-          lc_seconds_in_day TYPE i VALUE 86400.
+  method time_to_excel_string.
+    data: lv_seconds_in_day type i,
+          lv_day_fraction   type f,
+          lc_time_baseline  type t value '000000',
+          lc_seconds_in_day type i value 86400.
 
     lv_seconds_in_day = ip_value - lc_time_baseline.
     lv_day_fraction = lv_seconds_in_day / lc_seconds_in_day.
     ep_value = zcl_excel_common=>number_to_excel_string( ip_value = lv_day_fraction ).
-  ENDMETHOD.
+  endmethod.
 
 
-  METHOD unescape_string.
+  method unescape_string.
 
-    CONSTANTS   lcv_regex                       TYPE string VALUE `^'[^']`    & `|` &  " Beginning single ' OR
+    constants   lcv_regex                       type string value `^'[^']`    & `|` &  " Beginning single ' OR
                                                                   `[^']'$`    & `|` &  " Trailing single '  OR
                                                                   `[^']'[^']`.         " Single ' somewhere in between
 
 
-    DATA:       lv_errormessage                 TYPE string.                          " Can't pass '...'(abc) to exception-class
+    data:       lv_errormessage                 type string.                          " Can't pass '...'(abc) to exception-class
 
 *--------------------------------------------------------------------*
 * This method is used to extract the "real" string from an escaped string.
@@ -1709,48 +1560,50 @@ CLASS zcl_excel_common IMPLEMENTATION.
 *--------------------------------------------------------------------*
     ev_unescaped_string = iv_escaped.           " Pass through if not escaped
 
-    CHECK ev_unescaped_string IS NOT INITIAL.   " Nothing to do if empty
-    CHECK ev_unescaped_string(1) = `'`.         " Nothing to do if not escaped
+    check ev_unescaped_string is not initial.   " Nothing to do if empty
+    check ev_unescaped_string(1) = `'`.         " Nothing to do if not escaped
 
 *--------------------------------------------------------------------*
 * Remove leading and trailing '
 *--------------------------------------------------------------------*
-    REPLACE REGEX `^'(.*)'$` IN ev_unescaped_string WITH '$1'.
-    IF sy-subrc <> 0.
+    replace regex `^'(.*)'$` in ev_unescaped_string with '$1'.
+    if sy-subrc <> 0.
       lv_errormessage = 'Input not properly escaped - &'(002).
       zcx_excel=>raise_text( lv_errormessage ).
-    ENDIF.
+    endif.
 
 *--------------------------------------------------------------------*
 * Any remaining single ' should not be here
 *--------------------------------------------------------------------*
-    FIND REGEX lcv_regex IN ev_unescaped_string.
-    IF sy-subrc = 0.
+    find regex lcv_regex in ev_unescaped_string.
+    if sy-subrc = 0.
       lv_errormessage = 'Input not properly escaped - &'(002).
       zcx_excel=>raise_text( lv_errormessage ).
-    ENDIF.
+    endif.
 
 *--------------------------------------------------------------------*
 * Replace '' with '
 *--------------------------------------------------------------------*
-    REPLACE ALL OCCURRENCES OF `''` IN ev_unescaped_string WITH `'`.
+    replace all occurrences of `''` in ev_unescaped_string with `'`.
 
 
-  ENDMETHOD.
+  endmethod.
 
-  METHOD utclong_to_excel_string.
-    DATA lv_timestamp TYPE timestamp.
-    DATA lv_date TYPE d.
-    DATA lv_time TYPE t.
+  method utclong_to_excel_string.
+    data lv_timestamp type timestamp.
+    data lv_date type d.
+    data lv_time type t.
 
     " The data type UTCLONG and the method UTCLONG2TSTMP_SHORT are not available before ABAP 7.54
     "   -> Need of a dynamic call to avoid compilation error before ABAP 7.54
 
-    CALL METHOD cl_abap_tstmp=>('UTCLONG2TSTMP_SHORT')
-      EXPORTING utclong   = ip_utclong
-      RECEIVING timestamp = lv_timestamp.
-    CONVERT TIME STAMP lv_timestamp TIME ZONE 'UTC   ' INTO DATE lv_date TIME lv_time.
+    call method cl_abap_tstmp=>('UTCLONG2TSTMP_SHORT')
+      exporting
+        utclong   = ip_utclong
+      receiving
+        timestamp = lv_timestamp.
+    convert time stamp lv_timestamp time zone 'UTC   ' into date lv_date time lv_time.
     ep_value = |{ date_to_excel_string( lv_date ) + time_to_excel_string( lv_time ) }|.
-  ENDMETHOD.
+  endmethod.
 
-ENDCLASS.
+endclass.

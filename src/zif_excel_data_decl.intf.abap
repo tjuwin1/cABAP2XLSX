@@ -436,24 +436,23 @@ interface zif_excel_data_decl
          end of zexcel_s_drawings.
 
   types: begin of zexcel_s_fieldcatalog,
-           tabname         type tabname,
-           fieldname       type zexcel_fieldname,
-           position        type zexcel_component_position,
-           scrtext_s       type zexcel_disp_text_short,
-           scrtext_m       type zexcel_disp_text_medium,
-           scrtext_l       type zexcel_disp_text_long,
-           dynpfld         type zexcel_screen_display,
-           style           type zexcel_cell_style,
-           style_header    type zexcel_cell_style,
-           style_total     type zexcel_cell_style,
-           style_cond      type zexcel_cell_style,
-           totals_function type zexcel_table_totals_function,
-           formula         type abap_boolean,
-           abap_type       type c length 1,
-           column_formula  type string,
-           column_name     type zexcel_column_name,
-           currency_column type zexcel_fieldname,
-           width           type int4,
+           tabname          type tabname,
+           fieldname        type zexcel_fieldname,
+           position         type zexcel_component_position,
+           scrtext_l        type zexcel_disp_text_long,
+           style            type zexcel_cell_style,
+           style_header     type zexcel_cell_style,
+           style_total      type zexcel_cell_style,
+           style_cond       type zexcel_cell_style,
+           totals_function  type zexcel_table_totals_function,
+           formula          type abap_boolean,
+           abap_type        type c length 1,
+           column_formula   type string,
+           column_name      type zexcel_column_name,
+           currency_column  type zexcel_fieldname,
+           unit_column      type zexcel_fieldname,
+           text_column      type zexcel_fieldname,
+           width            type int4,
          end of zexcel_s_fieldcatalog.
 
   types: begin of zexcel_s_shared_string,
@@ -584,10 +583,10 @@ interface zif_excel_data_decl
            style_subtotal  type zexcel_cell_style,
            col_id          type zexcel_column_id,
            convexit        type zexcel_convexit,
-         end of zexcel_s_converter_fcat,
+         end of zexcel_s_converter_fcat.
 
-         zexcel_t_converter_col  type hashed table of ZEXCEL_s_CONVERTER_COL with unique key rownumber columnname,
-         zexcel_t_converter_fcat type standard table of ZEXCEL_s_CONVERTER_FCAT with non-unique default key.
+  types zexcel_t_converter_col       type hashed table of ZEXCEL_s_CONVERTER_COL with unique key rownumber columnname.
+  types zexcel_t_converter_fcat      type standard table of ZEXCEL_s_CONVERTER_FCAT with non-unique default key.
 
   types zexcel_t_autofilter_values   type standard table of ZEXCEL_s_AUTOFILTER_VALUES with non-unique default key.
   types zexcel_t_cellxfs             type standard table of ZEXCEL_s_CELLXFS with non-unique key
@@ -598,8 +597,9 @@ interface zif_excel_data_decl
   types zexcel_t_drawings            type standard table of ZEXCEL_s_DRAWINGS with non-unique default key.
   types zexcel_t_fieldcatalog        type standard table of ZEXCEL_s_FIELDCATALOG with non-unique default key.
   types zexcel_t_shared_string       type sorted table of ZEXCEL_s_SHARED_STRING with non-unique key string_value.
-  types zexcel_t_stylemapping1       type hashed table of ZEXCEL_s_STYLEMAPPING with unique key  dynamic_style_guid complete_stylex complete_style
-                        with further secondary keys.
+  types zexcel_t_stylemapping1       type hashed table of ZEXCEL_s_STYLEMAPPING
+      with unique key primary_key        components dynamic_style_guid complete_stylex complete_style
+      with non-unique sorted key added_to_iterator components added_to_iterator guid.
   types zexcel_t_stylemapping2       type hashed table of ZEXCEL_s_STYLEMAPPING with unique key guid.
   types zexcel_t_styles_cond_mapping type standard table of ZEXCEL_s_STYLES_COND_MAPPING with non-unique default key.
   types zexcel_t_styles_mapping      type standard table of ZEXCEL_s_STYLES_MAPPING with non-unique default key.
