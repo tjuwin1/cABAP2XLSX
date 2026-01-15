@@ -437,11 +437,11 @@ class zcl_excel implementation.
       lo_worksheet ?= lo_iterator->get_next( ).
 
       lv_tables_count = lo_worksheet->get_tables_size( ).
-      add lv_tables_count to ep_id.
+      ep_id += lv_tables_count.
 
     endwhile.
 
-    add 1 to ep_id.
+    ep_id += 1.
 
   endmethod.
 
@@ -508,7 +508,7 @@ class zcl_excel implementation.
 
     lo_iterator = me->get_styles_iterator( ).
     while lo_iterator->has_next( ) = 'X'.
-      add 1 to index.
+      index += 1.
       lo_style ?= lo_iterator->get_next( ).
       if lo_style->get_guid( ) = ip_guid.
         ep_index = index.
@@ -519,7 +519,7 @@ class zcl_excel implementation.
     if ep_index is initial.
       zcx_excel=>raise_text( 'Index not found' ).
     else.
-      subtract 1 from ep_index.  " In excel list starts with "0"
+      ep_index -= 1.  " In excel list starts with "0"
     endif.
   endmethod.
 

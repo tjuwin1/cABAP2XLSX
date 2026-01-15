@@ -316,7 +316,7 @@ CLASS zcl_excel_fill_template IMPLEMENTATION.
 
         lv_cell_value = <ls_cell>-cell_value.
 
-        FIND ALL OCCURRENCES OF REGEX '\[[^\]]*\]' IN <ls_cell>-cell_value  RESULTS lt_matches.
+        FIND ALL OCCURRENCES OF pcre '\[[^\]]*\]' IN <ls_cell>-cell_value  RESULTS lt_matches.
 
         SORT lt_matches BY offset DESCENDING .
 
@@ -453,7 +453,7 @@ CLASS zcl_excel_fill_template IMPLEMENTATION.
               ep_value = lv_value
               ep_style = lo_style ).
 
-          FIND ALL OCCURRENCES OF REGEX '\[[^\]]*\]' IN lv_value RESULTS lt_matches.
+          FIND ALL OCCURRENCES OF pcre '\[[^\]]*\]' IN lv_value RESULTS lt_matches.
 
           LOOP AT lt_matches ASSIGNING <ls_match>.
             lv_search = lv_value+<ls_match>-offset(<ls_match>-length).

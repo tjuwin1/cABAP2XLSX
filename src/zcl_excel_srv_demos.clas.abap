@@ -7,20 +7,20 @@ class zcl_excel_srv_demos definition
     interfaces if_http_service_extension .
   protected section.
   private section.
-    methods demo1 returning value(ro_excel) type ref to zcl_excel.
-    methods demo2 returning value(ro_excel) type ref to zcl_excel.
-    methods demo3 returning value(ro_excel) type ref to zcl_excel.
-    methods demo4 returning value(ro_excel) type ref to zcl_excel.
-    methods demo5 returning value(ro_excel) type ref to zcl_excel.
-    methods demo6 returning value(ro_excel) type ref to zcl_excel.
-    methods demo7 returning value(ro_excel) type ref to zcl_excel.
-    methods demo8 returning value(ro_excel) type ref to zcl_excel.
-    methods demo9 returning value(ro_excel) type ref to zcl_excel.
-    methods demo10 returning value(ro_excel) type ref to zcl_excel.
-    methods demo11 returning value(ro_excel) type ref to zcl_excel.
-    methods demo12 returning value(ro_excel) type ref to zcl_excel.
+    methods demo1 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo2 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo3 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo4 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo5 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo6 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo7 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo8 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo9 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo10 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo11 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
+    methods demo12 returning value(ro_excel) type ref to zcl_excel raising zcx_excel.
     methods write importing value(io_excel) type ref to zcl_excel
-                  returning value(rv_excel) type xstring.
+                  returning value(rv_excel) type xstring  raising zcx_excel.
 endclass.
 
 
@@ -41,11 +41,14 @@ class zcl_excel_srv_demos implementation.
         lv_html = |{ lv_html }</ul></body></html>|.
         response->set_text( lv_html ).
       when others.
-        response->set_content_type( 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ).
-        call method me->(lv_demo)
-          receiving
-            ro_excel = lv_xlsx.
-        response->set_binary( write( lv_xlsx ) ).
+        try.
+            call method me->(lv_demo)
+              receiving
+                ro_excel = lv_xlsx.
+            response->set_binary( write( lv_xlsx ) ).
+            response->set_content_type( 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ).
+          catch cx_root.
+        endtry.
     endcase.
   endmethod.
   method demo4.

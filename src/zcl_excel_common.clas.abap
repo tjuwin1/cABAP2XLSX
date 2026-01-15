@@ -444,7 +444,7 @@ class zcl_excel_common implementation.
 
     lv_columnrow = i_columnrow.    " Get rid of trailing blanks
 
-    find regex '^(\D+)(\d+)$' in lv_columnrow submatches e_column
+    find pcre '^(\D+)(\d+)$' in lv_columnrow submatches e_column
                                                          pane_cell_row_a.
     if e_column_int is supplied.
       e_column_int = convert_column2int( ip_column = e_column ).
@@ -503,10 +503,10 @@ class zcl_excel_common implementation.
       return.
 
     elseif i_range(1) = `'`.                              " b) sheetname existing - starts with '
-      find regex '\![^\!]*$' in i_range match offset lv_position.  " Find last !
+      find pcre '\![^\!]*$' in i_range match offset lv_position.  " Find last !
       if sy-subrc = 0.
         lv_sheet = i_range(lv_position).
-        add 1 to lv_position.
+        lv_position += 1.
         lv_range = i_range.
         shift lv_range left by lv_position places.
       else.
@@ -565,7 +565,7 @@ class zcl_excel_common implementation.
 
     columnrow = i_columnrow.
 
-    find regex '^(\D*)(\d*)$' in columnrow submatches e_column
+    find pcre '^(\D*)(\d*)$' in columnrow submatches e_column
                                                       row.
 
     e_row = row.
@@ -722,7 +722,7 @@ class zcl_excel_common implementation.
       lv_pwd_hash = (  shr14( lv_pwd_hash ) bit-and lv_0x0001 ) bit-or ( shl01( lv_pwd_hash ) bit-and lv_0x7fff ).
 
       lv_pwd_hash = lv_pwd_hash bit-xor lv_curr_hex.
-      subtract 1 from lv_curr_offset.
+      lv_curr_offset -= 1.
     endwhile.
 
     lv_pwd_hash = (  shr14( lv_pwd_hash ) bit-and lv_0x0001 ) bit-or ( shl01( lv_pwd_hash ) bit-and lv_0x7fff ).
@@ -772,7 +772,7 @@ class zcl_excel_common implementation.
     lv_value = ip_value.
 
 
-    find regex `\s|'|-` in lv_value.  " \s finds regular and white spaces
+    find pcre `\s|'|-` in lv_value.  " \s finds regular and white spaces
     if sy-subrc = 0.
       replace all occurrences of `'` in lv_value with `''`.
       concatenate `'` lv_value `'` into lv_value .
@@ -1416,8 +1416,8 @@ class zcl_excel_common implementation.
     do 15 times.
       get bit lv_curr_pos of i_pwd_hash into lv_bit.
       set bit lv_prev_pos of r_pwd_hash to lv_bit.
-      add 1 to lv_curr_pos.
-      add 1 to lv_prev_pos.
+      lv_curr_pos += 1.
+      lv_prev_pos += 1.
     enddo.
     set bit 16 of r_pwd_hash to 0.
 
@@ -1440,8 +1440,8 @@ class zcl_excel_common implementation.
       do 15 times.
         get bit lv_curr_pos of r_pwd_hash into lv_bit.
         set bit lv_next_pos of r_pwd_hash to lv_bit.
-        subtract 1 from lv_curr_pos.
-        subtract 1 from lv_next_pos.
+        lv_curr_pos -= 1.
+        lv_next_pos -= 1.
       enddo.
       set bit 1 of r_pwd_hash to 0.
     enddo.
@@ -1450,9 +1450,9 @@ class zcl_excel_common implementation.
 
 
   method split_file.
-
-    data: lt_hlp type table of text255,
-          ls_hlp type text255.
+types: ty_text255 type c length 255.
+    data: lt_hlp type table of ty_text255,
+          ls_hlp type ty_text255.
 
     data: lf_ext(10)     type c,
           lf_dot_ext(10) type c.
@@ -1566,7 +1566,7 @@ class zcl_excel_common implementation.
 *--------------------------------------------------------------------*
 * Remove leading and trailing '
 *--------------------------------------------------------------------*
-    replace regex `^'(.*)'$` in ev_unescaped_string with '$1'.
+    replace pcre `^'(.*)'$` in ev_unescaped_string with '$1'.
     if sy-subrc <> 0.
       lv_errormessage = 'Input not properly escaped - &'(002).
       zcx_excel=>raise_text( lv_errormessage ).
@@ -1575,7 +1575,7 @@ class zcl_excel_common implementation.
 *--------------------------------------------------------------------*
 * Any remaining single ' should not be here
 *--------------------------------------------------------------------*
-    find regex lcv_regex in ev_unescaped_string.
+    find pcre lcv_regex in ev_unescaped_string.
     if sy-subrc = 0.
       lv_errormessage = 'Input not properly escaped - &'(002).
       zcx_excel=>raise_text( lv_errormessage ).

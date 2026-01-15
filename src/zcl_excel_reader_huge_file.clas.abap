@@ -60,7 +60,7 @@ CLASS zcl_excel_reader_huge_file DEFINITION
       IMPORTING
         !io_reader               TYPE REF TO if_sxml_reader
       RETURNING
-        VALUE(et_shared_strings) TYPE stringtab .
+        VALUE(et_shared_strings) TYPE string_table .
     METHODS get_cell_coord
       IMPORTING
         !iv_coord       TYPE string

@@ -396,7 +396,7 @@ class zcl_excel_worksheet definition
         zcx_excel .
     methods get_comments
       importing
-        iv_copy_collection type flag default abap_true
+        iv_copy_collection type abap_boolean default abap_true
       returning
         value(r_comments)  type ref to zcl_excel_comments .
     methods get_drawings
@@ -481,7 +481,7 @@ class zcl_excel_worksheet definition
         value(ep_size) type i .
     methods get_title
       importing
-        !ip_escaped     type flag default ''
+        !ip_escaped     type abap_boolean default ''
       returning
         value(ep_title) type zif_excel_data_decl=>zexcel_sheet_title .
     methods is_cell_merged
@@ -531,7 +531,7 @@ class zcl_excel_worksheet definition
       importing
         !ip_column         type simple
         !ip_width_fix      type simple default 0
-        !ip_width_autosize type flag default 'X'
+        !ip_width_autosize type abap_boolean default 'X'
       raising
         zcx_excel .
     methods set_default_excel_date_format
@@ -1127,7 +1127,7 @@ class zcl_excel_worksheet implementation.
         insert ls_column_formula into table column_formulas.
       endif.
 
-      add 1 to lv_row_int.
+      lv_row_int += 1.
       loop at ip_table assigning <fs_table_line>.
 
         assign component <ls_field_catalog>-fieldname of structure <fs_table_line> to <fs_fldval>.
@@ -1237,7 +1237,7 @@ class zcl_excel_worksheet implementation.
             endif.
           endif.
         endif.
-        add 1 to lv_row_int.
+        lv_row_int += 1.
 
       endloop.
       if sy-subrc <> 0 and iv_no_line_if_empty = abap_false. "create empty row if table has no data
@@ -1431,7 +1431,7 @@ class zcl_excel_worksheet implementation.
     " The size used by the auto filter button does not depend on the font
     " size.
     if ld_flag_contains_auto_filter = abap_true.
-      add 2 to ep_width.
+      ep_width += 2.
     endif.
 
   endmethod.
@@ -1448,7 +1448,7 @@ class zcl_excel_worksheet implementation.
     data: lo_column_iterator type ref to zcl_excel_collection_iterator,
           lo_column          type ref to zcl_excel_column.
 
-    data: auto_size   type flag.
+    data: auto_size   type abap_boolean.
     data: auto_sizes  type tt_auto_size.
     data: count       type int4.
     data: highest_row type int4.
@@ -1551,10 +1551,10 @@ class zcl_excel_worksheet implementation.
                                  ip_column    = lv_column_int
                                  ip_row       = lv_row ).
 
-        add 1 to lv_row.
+        lv_row += 1.
       endwhile.
 
-      add 1 to lv_column_int.
+      lv_column_int += 1.
     endwhile.
 
   endmethod.
@@ -2510,11 +2510,11 @@ class zcl_excel_worksheet implementation.
       lo_worksheet ?= lo_worksheets_iterator->get_next( ).
       title = lo_worksheet->get_title( ).
       insert title into table t_titles.
-      add 1 to sheetnumber.
+      sheetnumber += 1.
     endwhile.
 
 * Now build sheetnumber.  Increase counter until we hit a number that is not used so far
-    add 1 to sheetnumber.  " Start counting with next number
+    sheetnumber += 1.  " Start counting with next number
     do.
       title = sheetnumber.
       shift title left deleting leading space.
@@ -2524,7 +2524,7 @@ class zcl_excel_worksheet implementation.
         exit.
       endif.
 
-      add 1 to sheetnumber.
+      sheetnumber += 1.
     enddo.
   endmethod.                    "GENERATE_TITLE
 
@@ -2671,7 +2671,7 @@ class zcl_excel_worksheet implementation.
 
 
   method get_default_excel_date_format.
-    constants c_lang_e type langu value 'E'.
+    constants c_lang_e type sylangu value 'E'.
 
     if default_excel_date_format is not initial.
       ep_default_excel_date_format = default_excel_date_format.
@@ -3173,7 +3173,7 @@ class zcl_excel_worksheet implementation.
 *  CATCH zcx_excel.    "
                 lv_actual_col += 1.
               endwhile.
-              add 1 to lv_actual_row.
+              lv_actual_row += 1.
             endwhile.
 
             if iv_skip_bottom_empty_rows = abap_true.
@@ -3484,8 +3484,8 @@ class zcl_excel_worksheet implementation.
           lo_range                  type ref to zcl_excel_range,
           lv_repeat_range_sheetname type string,
           lv_repeat_range_col       type string,
-          lv_row_char_from          type char10,
-          lv_row_char_to            type char10,
+          lv_row_char_from          type c length 10,
+          lv_row_char_to            type c length 10,
           lv_repeat_range_row       type string,
           lv_repeat_range           type string.
 
@@ -3647,10 +3647,10 @@ class zcl_excel_worksheet implementation.
 
           endif.
 
-          add 1 to lv_row.
+          lv_row += 1.
         endwhile.
 
-        add 1 to lv_column_int.
+        lv_column_int += 1.
       endwhile.
 
     endif.
@@ -3709,10 +3709,10 @@ class zcl_excel_worksheet implementation.
           me->set_cell_formula( ip_column = ld_column ip_row = ld_row
                                 ip_formula = ip_formula ).
 
-          add 1 to ld_row.
+          ld_row += 1.
         endwhile.
 
-        add 1 to ld_column_int.
+        ld_column_int += 1.
       endwhile.
 
     endif.
@@ -3760,9 +3760,9 @@ class zcl_excel_worksheet implementation.
 
         me->set_cell( ip_column = ld_current_column ip_row = ld_current_row ip_value = ld_value ip_formula = ld_formula ip_hyperlink = lo_hyperlink ).
 
-        add 1 to ld_current_row.
+        ld_current_row += 1.
       endwhile.
-      add 1 to ld_column_int.
+      ld_column_int += 1.
     endwhile.
 
   endmethod.                    "SET_AREA_HYPERLINK
@@ -3790,9 +3790,9 @@ class zcl_excel_worksheet implementation.
       while ld_current_row <= ld_row_end.
         me->set_cell_style( ip_row = ld_current_row ip_column = ld_current_column
                             ip_style = ip_style ).
-        add 1 to ld_current_row.
+        ld_current_row += 1.
       endwhile.
-      add 1 to ld_column_int.
+      ld_column_int += 1.
     endwhile.
     if ip_merge is supplied and ip_merge = abap_true.
       me->set_merge( ip_column_start = ld_column_start_int ip_row = ld_row_start
@@ -4018,7 +4018,7 @@ class zcl_excel_worksheet implementation.
       " To not interpret such text, the first underscore is replaced with "_x005f_".
       " The value "_x0041_" is to be stored internally "_x005f_x0041_" so that it's rendered like "_x0041_".
       " Note that REGEX is time consuming, it's why "CS" is used above to improve the performance.
-      replace all occurrences of regex '_(x[0-9a-fA-F]{4}_)' in lv_value with '_x005f_$1' respecting case.
+      replace all occurrences of pcre '_(x[0-9a-fA-F]{4}_)' in lv_value with '_x005f_$1' respecting case.
     endif.
 
     " Begin of change issue #152 - don't touch existing style if only value is passed
@@ -4357,9 +4357,9 @@ class zcl_excel_worksheet implementation.
       while ld_current_row <= ld_row_end.
         me->set_cell_style( ip_row = ld_current_row ip_column = ld_current_column
                             ip_style = ip_style ).
-        add 1 to ld_current_row.
+        ld_current_row += 1.
       endwhile.
-      add 1 to ld_column_int.
+      ld_column_int += 1.
     endwhile.
   endmethod.                    "set_merge_style
 

@@ -39,7 +39,7 @@ CLASS zcl_excel_collection_iterator IMPLEMENTATION.
 
   METHOD get_next .
     DATA obj TYPE REF TO object.
-    index = index + 1.
+    index += 1.
     object = collection->get( index ).
   ENDMETHOD.
 
