@@ -894,8 +894,6 @@ class zcl_excel_srv_demos implementation.
     lt_field_catalog[ fieldname = 'MATERIAL' ]-text_column = 'MATTEXT'.
     delete lt_field_catalog where fieldname = 'CURRN' or fieldname = 'MEINS' or fieldname = 'MATTEXT'.
 
-
-    lo_worksheet->calculate_column_widths(  ).
     lo_worksheet->bind_table( ip_table          = lt_out
                               it_field_catalog = lt_field_catalog
                               is_table_settings = value zif_excel_data_decl=>zexcel_s_table_settings(
@@ -912,6 +910,275 @@ class zcl_excel_srv_demos implementation.
   endmethod.
 
   method demo8.
+    types: begin of ty_keytext,
+             key  type string,
+             text type string,
+           end of ty_keytext,
+           tyt_keytext type standard table of ty_keytext with default key.
+    types ty_numc10 type n length 10.
+    types: begin of ty_order,
+             order_number       type ty_numc10,
+             order_date         type d,
+             customer_number    type ty_numc10,
+             customer_name      type string,
+             order_reference    type string,
+             product_ordered    type string,
+             product_desc       type string,
+             order_quantity     type i,
+             quantity_unit      type string,
+             order_value        type p length 10 decimals 2,
+             order_currency     type waers,
+             fulfilled_quantity type i,
+             fulfilment_date    type d,
+           end of ty_order.
+
+    data gt_orders    type standard table of ty_order.
+    data gs_order     type ty_order.
+
+    data gt_customers type tyt_keytext.
+    data gt_products  type tyt_keytext.
+    data gt_units     type tyt_keytext.
+
+    gt_customers = value #( ( key = '0000897234' text = 'Acme Corp' )
+                            ( key = '0000897544' text = 'BlueSky Ltd' )
+                            ( key = '0000234234' text = 'TechNova Inc' )
+                            ( key = '0000197234' text = 'GreenField AG' )
+                            ( key = '0000437234' text = 'NextGen Solutions' ) ).
+
+    gt_products = value #( ( key = '1212344123' text = 'Laptop' )
+                           ( key = '1212134123' text = 'Monitor' )
+                           ( key = '1231344123' text = 'Keyboard' )
+                           ( key = '1257844123' text = 'Mouse' )
+                           ( key = '1267844123' text = 'Printer' ) ).
+
+    gt_units = value #( ( key = 'EA' text = 'EA' )
+                        ( key = 'BOX' text = 'BOX' )
+                        ( key = 'ST' text = 'PCS' )
+                        ( key = 'PAL' text = 'PAL' ) ).
+
+    "-------------------------------------------------
+    " Random Generators
+    "-------------------------------------------------
+    data(lo_rand_int)   = cl_abap_random_int=>create( seed = conv i( cl_abap_context_info=>get_system_time( ) )
+                                                      min  = 1
+                                                      max  = 100 ).
+    data(lo_rand_date)  = cl_abap_random_int=>create( seed = conv i( cl_abap_context_info=>get_system_time( ) )
+                                                      min  = 1
+                                                      max  = 90 ).
+    data(lo_rand_price) = cl_abap_random_int=>create( seed = conv i( cl_abap_context_info=>get_system_time( ) )
+                                                      min  = 100
+                                                      max  = 5000 ).
+
+    data(lo_index_customer) = cl_abap_random_int=>create( seed = conv i( cl_abap_context_info=>get_system_time( ) )
+                                                          min  = 1
+                                                          max  = lines( gt_customers ) ).
+
+    data(lo_index_product) = cl_abap_random_int=>create( seed = conv i( cl_abap_context_info=>get_system_time( ) )
+                                                         min  = 1
+                                                         max  = lines( gt_products ) ).
+
+    data(lo_index_unit) = cl_abap_random_int=>create( seed = conv i( cl_abap_context_info=>get_system_time( ) )
+                                                      min  = 1
+                                                      max  = lines( gt_units ) ).
+    "-------------------------------------------------
+    " Create Random Records
+    "-------------------------------------------------
+    do 100 times.
+      read table gt_customers index lo_index_customer->get_next( ) into data(lv_customer).
+      read table gt_products  index lo_index_product->get_next( )  into data(lv_product).
+      read table gt_units     index lo_index_unit->get_next( )     into data(lv_unit).
+
+      gs_order-order_number       = sy-index.
+      gs_order-order_date         = cl_abap_context_info=>get_system_date( ) - lo_rand_date->get_next( ).
+      gs_order-customer_number    = lv_customer-key.
+      gs_order-customer_name      = lv_customer-text.
+      gs_order-order_reference    = |REF-{ lo_rand_date->get_next( ) }|.
+      gs_order-product_ordered    = lv_product-key.
+      gs_order-product_desc       = lv_product-text.
+      gs_order-order_quantity     = lo_rand_int->get_next( ).
+      gs_order-quantity_unit      = lv_unit-text.
+      gs_order-order_value        = lo_rand_price->get_next( ).
+      gs_order-order_currency     = 'USD'.
+      gs_order-fulfilled_quantity = gs_order-order_quantity - 1.
+      gs_order-fulfilment_date    = gs_order-order_date + 3.
+
+      append gs_order to gt_orders.
+      clear gs_order.
+
+    enddo.
+
+    data lt_field_catalog type zif_excel_data_decl=>zexcel_t_fieldcatalog.
+
+    data lo_worksheet     type ref to zcl_excel_worksheet.
+    ro_excel = new #( ).
+
+    " Get active sheet
+    lo_worksheet = ro_excel->get_active_worksheet( ).
+    lt_field_catalog = zcl_excel_common=>get_fieldcatalog( ip_table = gt_orders ).
+    lo_worksheet->bind_table( ip_table          = gt_orders
+                              it_field_catalog  = lt_field_catalog
+                              is_table_settings = value zif_excel_data_decl=>zexcel_s_table_settings(
+                                                            table_name       = 'MyDataTable'
+                                                            top_left_column  = 'A'
+                                                            top_left_row     = 1
+                                                            show_row_stripes = abap_true ) ).
+
+    do lo_worksheet->get_highest_column( ) times.
+      lo_worksheet->get_column( zcl_excel_common=>convert_column2alpha( sy-index ) )->set_auto_size( abap_true ).
+    enddo.
+    lo_worksheet->calculate_column_widths( ).
+
+
+    types: begin of ty_customer_summary,
+             customer_number   type ty_numc10,
+             customer_name     type string,
+             total_orders      type i,
+             total_sales_value type p length 12 decimals 2,
+             currency          type waers,
+           end of ty_customer_summary.
+    types: begin of ty_monthly_sales,
+             year         type n length 4,
+             month        type n length 2,
+             total_orders type i,
+             total_value  type p length 12 decimals 2,
+           end of ty_monthly_sales.
+
+    types: begin of ty_sales_summary,
+             material            type string,
+             total_order_qty     type i,
+             total_fulfilled_qty type i,
+             quantity_unit      type string,
+             total_sales_value   type p length 12 decimals 2,
+             currency            type waers,
+           end of ty_sales_summary.
+
+    data gt_monthly_sales type standard table of ty_monthly_sales.
+    data gs_monthly_sales type ty_monthly_sales.
+
+    data gt_sales_summary type standard table of ty_sales_summary.
+    data gs_sales_summary type ty_sales_summary.
+
+    data gt_summary       type standard table of ty_customer_summary.
+    data gs_summary       type ty_customer_summary.
+
+    "-------------------------------------------------
+    " Build Summary From Orders Table
+    "-------------------------------------------------
+    loop at gt_orders into data(ls_order).
+
+      data(lv_year)  = ls_order-order_date+0(4).
+      data(lv_month) = ls_order-order_date+4(2).
+
+      read table gt_monthly_sales
+           into gs_monthly_sales
+           with key year  = lv_year
+                    month = lv_month.
+
+      if sy-subrc = 0.
+
+        " Update existing entry
+        gs_monthly_sales-total_orders += 1.
+        gs_monthly_sales-total_value  += ls_order-order_value.
+
+        modify gt_monthly_sales from gs_monthly_sales index sy-tabix.
+
+      else.
+
+        " Create new month entry
+        clear gs_monthly_sales.
+
+        gs_monthly_sales-year         = lv_year.
+        gs_monthly_sales-month        = lv_month.
+        gs_monthly_sales-total_orders = 1.
+        gs_monthly_sales-total_value  = ls_order-order_value.
+
+        append gs_monthly_sales to gt_monthly_sales.
+
+      endif.
+
+      read table gt_sales_summary
+           into gs_sales_summary
+           with key material = ls_order-product_ordered.
+
+      if sy-subrc = 0.
+
+        gs_sales_summary-total_order_qty     += ls_order-order_quantity.
+        gs_sales_summary-total_fulfilled_qty += ls_order-fulfilled_quantity.
+        gs_sales_summary-total_sales_value   += ls_order-order_value.
+
+        modify gt_sales_summary from gs_sales_summary
+               transporting total_order_qty
+                            total_fulfilled_qty
+                            total_sales_value
+               where material = ls_order-product_ordered.
+
+      else.
+
+        clear gs_sales_summary.
+
+        gs_sales_summary-material            = ls_order-product_ordered.
+        gs_sales_summary-total_order_qty     = ls_order-order_quantity.
+        gs_sales_summary-total_fulfilled_qty = ls_order-fulfilled_quantity.
+        gs_sales_summary-total_sales_value   = ls_order-order_value.
+        gs_sales_summary-quantity_unit       = ls_order-quantity_unit.
+        gs_sales_summary-currency            = ls_order-order_currency.
+
+        append gs_sales_summary to gt_sales_summary.
+
+      endif.
+
+      read table gt_summary into gs_summary
+           with key customer_number = ls_order-customer_number.
+
+      if sy-subrc = 0.
+
+        gs_summary-total_orders      += 1.
+        gs_summary-total_sales_value += ls_order-order_value.
+
+        modify gt_summary from gs_summary index sy-tabix.
+
+      else.
+
+        gs_summary-customer_number   = ls_order-customer_number.
+        gs_summary-customer_name     = ls_order-customer_name.
+        gs_summary-total_orders      = 1.
+        gs_summary-total_sales_value = ls_order-order_value.
+        gs_summary-currency          = ls_order-order_currency.
+
+        append gs_summary to gt_summary.
+
+      endif.
+
+    endloop.
+
+    " Get active sheet
+    lo_worksheet = ro_excel->add_new_worksheet(  ).
+    lo_worksheet->bind_table( ip_table          = gt_summary
+                              is_table_settings = value zif_excel_data_decl=>zexcel_s_table_settings(
+                                                            table_name       = 'CustSummary'
+                                                            top_left_column  = 'A'
+                                                            top_left_row     = 1
+                                                            show_row_stripes = abap_true ) ).
+
+    lo_worksheet->bind_table( ip_table          = gt_sales_summary
+                              is_table_settings = value zif_excel_data_decl=>zexcel_s_table_settings(
+                                                            table_name       = 'MatSummary'
+                                                            top_left_column  = 'A'
+                                                            top_left_row     = lo_worksheet->get_highest_row( ) + 2
+                                                            show_row_stripes = abap_true ) ).
+
+    lo_worksheet->bind_table( ip_table          = gt_monthly_sales
+                              is_table_settings = value zif_excel_data_decl=>zexcel_s_table_settings(
+                                                            table_name       = 'MonthSummary'
+                                                            top_left_column  = 'A'
+                                                            top_left_row     = lo_worksheet->get_highest_row( ) + 2
+                                                            show_row_stripes = abap_true ) ).
+
+    do lo_worksheet->get_highest_column( ) times.
+      lo_worksheet->get_column( zcl_excel_common=>convert_column2alpha( sy-index ) )->set_auto_size( abap_true ).
+    enddo.
+    lo_worksheet->calculate_column_widths( ).
+
   endmethod.
   method demo12.
 
