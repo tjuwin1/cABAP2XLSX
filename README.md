@@ -1,5 +1,5 @@
 # Cloud-ABAP2XLSX
-This is a thinned/stripped down version of <a href="https://github.com/abap2xlsx/abap2xlsx">ABAP2XLSX</a> for ABAP Cloud systems.
+This is a thinned/stripped down version of <a href="https://github.com/abap2xlsx/abap2xlsx">ABAP2XLSX</a> for ABAP Cloud systems. For complete functionality, onPrem users must still use the original ABAP2XLSX repo linked here.
 
 Primary focus was given to the following changes:
 
