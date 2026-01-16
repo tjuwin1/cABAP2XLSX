@@ -30,11 +30,6 @@ class zcl_excel_common definition
     class-data lt_uoms type standard table of ty_uom.
     class-data lt_currs type standard table of ty_curr.
     class-methods class_constructor .
-    class-methods describe_structure
-      importing
-        !io_struct type ref to cl_abap_structdescr.
-*      RETURNING
-*        VALUE(rt_dfies) TYPE ddfields .
     class-methods convert_column2alpha
       importing
         !ip_column       type simple
@@ -249,11 +244,6 @@ class zcl_excel_common definition
       returning
         value(rt_components) type abap_component_tab .
     types ty_char1 type c length 1.
-    class-methods char2hex
-      importing
-        !i_char      type ty_char1
-      returning
-        value(r_hex) type zif_excel_data_decl=>zexcel_pwd_hash .
     class-methods shl01
       importing
         !i_pwd_hash       type zif_excel_data_decl=>zexcel_pwd_hash
@@ -311,22 +301,6 @@ class zcl_excel_common implementation.
     ev_col_difference = lv_current_col - lv_reference_col.
 
   endmethod.
-
-
-  method char2hex.
-    "@TODO: Juwin to Fix
-*    IF o_conv IS NOT BOUND.
-*      o_conv = cl_abap_conv_out_ce=>create( endian   = 'L'
-*                                            ignore_cerr = abap_true
-*                                            replacement = '#' ).
-*    ENDIF.
-*
-*    CALL METHOD o_conv->reset( ).
-*    CALL METHOD o_conv->write( data = i_char ).
-*    r_hex+1 = o_conv->get_buffer( ). " x'65' must be x'0065'
-
-  endmethod.
-
 
   method class_constructor.
     c_xlsx_file_filter = 'Excel Workbook (*.xlsx)|*.xlsx|'(005).
@@ -619,56 +593,6 @@ class zcl_excel_common implementation.
     ep_value = zcl_excel_common=>number_to_excel_string( ip_value = lv_date_diff ).
   endmethod.
 
-
-  method describe_structure.
-    "@TODO: Juwin to throw error
-*    DATA: lt_components TYPE abap_component_tab,
-*          lt_comps      TYPE abap_component_tab,
-*          ls_component  TYPE abap_componentdescr,
-*          lo_elemdescr  TYPE REF TO cl_abap_elemdescr,
-*          ls_dfies      TYPE dfies,
-*          l_position    LIKE ls_dfies-position.
-*
-*    "for DDIC structure get the info directly
-*    IF io_struct->is_ddic_type( ) = abap_true.
-*      rt_dfies = io_struct->get_ddic_field_list( ).
-*    ELSE.
-*      lt_components = io_struct->get_components( ).
-*
-*      LOOP AT lt_components INTO ls_component.
-*        structure_case( EXPORTING is_component  = ls_component
-*                        CHANGING  xt_components = lt_comps   ) .
-*      ENDLOOP.
-*      LOOP AT lt_comps INTO ls_component.
-*        CLEAR ls_dfies.
-*        IF ls_component-type->kind = cl_abap_typedescr=>kind_elem. "E Elementary Type
-*          ADD 1 TO l_position.
-*          lo_elemdescr ?= ls_component-type.
-*          IF lo_elemdescr->is_ddic_type( ) = abap_true.
-*            ls_dfies           = lo_elemdescr->get_ddic_field( ).
-*            ls_dfies-fieldname = ls_component-name.
-*            ls_dfies-position  = l_position.
-*          ELSE.
-*            ls_dfies-fieldname = ls_component-name.
-*            ls_dfies-position  = l_position.
-*            ls_dfies-inttype   = lo_elemdescr->type_kind.
-*            ls_dfies-leng      = lo_elemdescr->length.
-*            ls_dfies-outputlen = lo_elemdescr->length.
-*            ls_dfies-decimals  = lo_elemdescr->decimals.
-*            ls_dfies-fieldtext = ls_component-name.
-*            ls_dfies-reptext   = ls_component-name.
-*            ls_dfies-scrtext_s = ls_component-name.
-*            ls_dfies-scrtext_m = ls_component-name.
-*            ls_dfies-scrtext_l = ls_component-name.
-*            ls_dfies-dynpfld   = abap_true.
-*          ENDIF.
-*          INSERT ls_dfies INTO TABLE rt_dfies.
-*        ENDIF.
-*      ENDLOOP.
-*    ENDIF.
-  endmethod.
-
-
   method determine_resulting_formula.
 
     data: lv_row_difference type i,
@@ -717,7 +641,7 @@ class zcl_excel_common implementation.
     while lv_curr_offset ge 0.
 
       lv_curr_char = lv_pwd+lv_curr_offset(1).
-      lv_curr_hex = char2hex( lv_curr_char ).
+      lv_curr_hex = xco_cp=>string( lv_curr_char )->as_xstring( xco_cp_character=>code_page->utf_8 )->value.
 
       lv_pwd_hash = (  shr14( lv_pwd_hash ) bit-and lv_0x0001 ) bit-or ( shl01( lv_pwd_hash ) bit-and lv_0x7fff ).
 
