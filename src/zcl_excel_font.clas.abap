@@ -1,65 +1,70 @@
-CLASS zcl_excel_font DEFINITION
-  PUBLIC
-  FINAL
-  CREATE PUBLIC .
+class zcl_excel_font definition
+  public
+  final
+  create public .
 
-  PUBLIC SECTION.
+  public section.
 
-    TYPES ty_font_height TYPE n LENGTH 3.
-    CONSTANTS lc_default_font_height TYPE ty_font_height VALUE '110' ##NO_TEXT.
-    CONSTANTS lc_default_font_name type zif_excel_data_decl=>zexcel_style_font_name VALUE 'Calibri' ##NO_TEXT.
+    types ty_font_height type n length 3.
+    constants lc_default_font_height type ty_font_height value '110' ##NO_TEXT.
+    constants lc_default_font_name type zif_excel_data_decl=>zexcel_style_font_name value 'Calibri' ##NO_TEXT.
 
-    CLASS-METHODS calculate_text_width
-      IMPORTING
+    class-methods calculate_text_width
+      importing
         !iv_font_name   type zif_excel_data_decl=>zexcel_style_font_name
-        !iv_font_height TYPE ty_font_height
-        !iv_flag_bold   TYPE abap_bool
-        !iv_flag_italic TYPE abap_bool
+        !iv_font_height type ty_font_height
+        !iv_flag_bold   type abap_bool
+        !iv_flag_italic type abap_bool
         !iv_cell_value  type zif_excel_data_decl=>zexcel_cell_value
-      RETURNING
-        VALUE(rv_width) TYPE f .
-  PROTECTED SECTION.
-  PRIVATE SECTION.
-    TYPES:
-      BEGIN OF mty_s_font_metric,
-        char       TYPE c LENGTH 1,
-        char_width TYPE i,
-      END OF mty_s_font_metric .
-    TYPES:
+      returning
+        value(rv_width) type f .
+  protected section.
+  private section.
+    types:
+      begin of mty_s_font_metric,
+        char       type c length 1,
+        char_width type i,
+      end of mty_s_font_metric .
+    types:
       mty_th_font_metrics
-               TYPE HASHED TABLE OF mty_s_font_metric
-               WITH UNIQUE KEY char .
-    TYPES:
-      BEGIN OF mty_s_font_cache,
+               type hashed table of mty_s_font_metric
+               with unique key char .
+    types:
+      begin of mty_s_font_cache,
         font_name       type zif_excel_data_decl=>zexcel_style_font_name,
-        font_height     TYPE ty_font_height,
-        flag_bold       TYPE abap_bool,
-        flag_italic     TYPE abap_bool,
-        th_font_metrics TYPE mty_th_font_metrics,
-      END OF mty_s_font_cache .
-    TYPES:
+        font_height     type ty_font_height,
+        flag_bold       type abap_bool,
+        flag_italic     type abap_bool,
+        th_font_metrics type mty_th_font_metrics,
+      end of mty_s_font_cache .
+    types:
       mty_th_font_cache
-               TYPE HASHED TABLE OF mty_s_font_cache
-               WITH UNIQUE KEY font_name font_height flag_bold flag_italic .
+               type hashed table of mty_s_font_cache
+               with unique key font_name font_height flag_bold flag_italic .
 
-    CLASS-DATA mth_font_cache TYPE mty_th_font_cache .
+    class-data mth_font_cache type mty_th_font_cache .
 
-ENDCLASS.
-
-
-
-CLASS zcl_excel_font IMPLEMENTATION.
+endclass.
 
 
-  METHOD calculate_text_width.
-  rv_width = 100.
+
+class zcl_excel_font implementation.
+
+
+  method calculate_text_width.
+    constants lc_excel_cell_padding type f value '0.75'.
+    data:         ld_length                  type i.
+    ld_length = strlen( iv_cell_value ).
+    rv_width = ld_length * iv_font_height / lc_default_font_height + lc_excel_cell_padding.
+    if rv_width < 12.
+      rv_width = 12.
+    endif.
+
 *
-*    CONSTANTS lc_excel_cell_padding TYPE f VALUE '0.75'.
 *
 *    DATA: ld_current_character       TYPE c LENGTH 1,
 *          lt_itcfc                   TYPE STANDARD TABLE OF itcfc,
 *          ld_offset                  TYPE i,
-*          ld_length                  TYPE i,
 *          ld_uccp                    TYPE i,
 *          ls_font_metric             TYPE mty_s_font_metric,
 *          ld_width_from_font_metrics TYPE i,
@@ -182,5 +187,5 @@ CLASS zcl_excel_font IMPLEMENTATION.
 *      rv_width = ld_width_from_font_metrics / 100 + lc_excel_cell_padding.
 *    ENDIF.
 
-  ENDMETHOD.
-ENDCLASS.
+  endmethod.
+endclass.

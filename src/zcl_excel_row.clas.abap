@@ -142,8 +142,8 @@ CLASS zcl_excel_row IMPLEMENTATION.
 
     lt_row_outlines = io_worksheet->get_row_outlines( ).
 
-    LOOP AT lt_row_outlines ASSIGNING <ls_row_outline> WHERE row_from <= me->row_index
-                                                         AND row_to   >= me->row_index. "#EC CI_SORTSEQ
+    LOOP AT lt_row_outlines ASSIGNING <ls_row_outline> WHERE row_from <= me->row_index ##PRIMKEY[ROW_TO]
+                                                         AND row_to   >= me->row_index.
       r_outline_level += 1.
     ENDLOOP.
 
@@ -176,8 +176,8 @@ CLASS zcl_excel_row IMPLEMENTATION.
     lt_row_outlines = io_worksheet->get_row_outlines( ).
 
     LOOP AT lt_row_outlines TRANSPORTING NO FIELDS WHERE row_from  <= me->row_index
-                                                         AND row_to    >= me->row_index
-                                                         AND collapsed  = abap_true. "#EC CI_SORTSEQ
+                                                     AND row_to    >= me->row_index ##PRIMKEY[ROW_TO]
+                                                     AND collapsed  = abap_true.
         CLEAR r_visible.
         RETURN. " one hit is enough to ensure invisibility
     ENDLOOP.

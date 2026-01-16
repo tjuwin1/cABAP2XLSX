@@ -271,7 +271,6 @@ interface zif_excel_data_decl
            subtot           type zexcel_converter_option_subtot,
            hidenc           type zexcel_converter_option_hidenc,
            hidehd           type zexcel_converter_option_hidehd,
-           conv_exit_length type abap_boolean,
          end of zexcel_s_converter_option.
 
   types: begin of zexcel_s_cstylex_alignment,

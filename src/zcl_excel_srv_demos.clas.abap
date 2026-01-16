@@ -878,10 +878,16 @@ class zcl_excel_srv_demos implementation.
     " Get active sheet
     lo_worksheet = ro_excel->get_active_worksheet( ).
     lt_out = value #(
-      ( material = '897234' mattext = 'sddf' qnty = '12.768' meins = 'ST' amnt = '1233.23' currn = 'USD' )
-      ( material = '897234' mattext = 'sddf' qnty = '12.768' meins = 'KGM' amnt = '1233.23' currn = 'JPY' )
-      ( material = '897234' mattext = 'sddf' qnty = '12.768' meins = 'DGP' amnt = '1233.23' currn = 'BHD' )
-      ( material = '897234' mattext = 'sddf' qnty = '12.768' meins = '13' amnt = '1233.23' currn = 'CAD' ) ).
+      ( material = '897234' mattext = 'Aether-Glass' qnty = '12.768' meins = 'ST' amnt = '1233.23' currn = 'USD' )
+      ( material = '892234' mattext = 'Obsidian-Silk' qnty = '12.768' meins = 'KGM' amnt = '1233.23' currn = 'JPY' )
+      ( material = '837234' mattext = 'Ferro-Gel' qnty = '12.768' meins = 'DGP' amnt = '-1233.23' currn = 'BHD' )
+      ( material = '117234' mattext = 'Neon-Quartz' qnty = '12.768' meins = 'KGM' amnt = '1233.23' currn = 'USD' )
+      ( material = '297234' mattext = 'Cryo-Ceramic' qnty = '12.768' meins = 'DGP' amnt = '1233.23' currn = 'JPY' )
+      ( material = '837234' mattext = 'Vapor-Steel' qnty = '12.768' meins = 'KGM' amnt = '-1233.23' currn = 'JPY' )
+      ( material = '847234' mattext = 'Mycelium-Brass' qnty = '12.768' meins = 'ST' amnt = '1233.23' currn = 'BHD' )
+      ( material = '896234' mattext = 'Void-Polymer' qnty = '12.768' meins = 'KGM' amnt = '1233.23' currn = 'USD' )
+      ( material = '897734' mattext = 'Plasma-Amber' qnty = '12.768' meins = 'DGP' amnt = '-1233.23' currn = 'CAD' )
+      ( material = '897284' mattext = 'Titan-Oak' qnty = '12.768' meins = '13' amnt = '1233.23' currn = 'CAD' ) ).
     lt_field_catalog = zcl_excel_common=>get_fieldcatalog( ip_table = lt_out ).
     lt_field_catalog[ fieldname = 'AMNT' ]-currency_column = 'CURRN'.
     lt_field_catalog[ fieldname = 'QNTY' ]-unit_column = 'MEINS'.

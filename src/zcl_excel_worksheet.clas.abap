@@ -508,7 +508,6 @@ class zcl_excel_worksheet definition
         !ip_unitofmeasure     type meins optional
         !it_rtf               type zif_excel_data_decl=>zexcel_t_rtf optional
         !ip_column_formula_id type mty_s_column_formula-id optional
-        !ip_conv_exit_length  type abap_bool default abap_false
       raising
         zcx_excel .
     methods set_cell_formula
@@ -791,11 +790,6 @@ class zcl_excel_worksheet definition
         is_color  type zif_excel_data_decl=>zexcel_s_style_color
       changing
         cs_xcolor type zif_excel_data_decl=>zexcel_s_cstylex_color.
-    methods create_data_conv_exit_length
-      importing
-        !ip_value       type simple
-      returning
-        value(ep_value) type ref to data.
     methods generate_title
       returning
         value(ep_title) type zif_excel_data_decl=>zexcel_sheet_title .
@@ -2060,11 +2054,8 @@ class zcl_excel_worksheet implementation.
     c_messages-formula_not_in_this_table = |{ 'The cell uses a Column Formula which should be part of the same table'(010) }|.
     c_messages-formula_in_other_column = |{ 'The cell uses a Column Formula which is in a different column'(011) }|.
 
-    assign ('CL_ABAP_TYPEDESCR=>TYPEKIND_UTCLONG') to <lv_typekind>.
-    if sy-subrc = 0.
-      call method cl_abap_elemdescr=>('GET_UTCLONG') receiving p_result = lo_rtti.
-      create data variable_utclong type handle lo_rtti.
-    endif.
+    call method cl_abap_elemdescr=>get_utclong receiving p_result = lo_rtti.
+    create data variable_utclong type handle lo_rtti.
 
   endmethod.
 
@@ -2417,27 +2408,6 @@ class zcl_excel_worksheet implementation.
 *            output = <lv_data>.
 *      ENDLOOP.
 *    ENDLOOP.
-
-  endmethod.
-
-
-  method create_data_conv_exit_length.
-*@TODO:Commented by Juwin
-*    DATA: lo_addit    TYPE REF TO cl_abap_elemdescr,
-*          ls_dfies    TYPE dfies,
-*          l_function  TYPE funcname,
-*          l_value(50) TYPE c.
-*
-*    lo_addit ?= cl_abap_typedescr=>describe_by_data( ip_value ).
-*    lo_addit->get_ddic_field( RECEIVING  p_flddescr   = ls_dfies
-*                              EXCEPTIONS not_found    = 1
-*                                         no_ddic_type = 2
-*                                         OTHERS       = 3 ) .
-*    IF sy-subrc = 0 AND ls_dfies-convexit IS NOT INITIAL.
-*      CREATE DATA ep_value TYPE c LENGTH ls_dfies-outputlen.
-*    ELSE.
-*      CREATE DATA ep_value LIKE ip_value.
-*    ENDIF.
 
   endmethod.
 
@@ -3304,6 +3274,30 @@ class zcl_excel_worksheet implementation.
   endmethod.
 
 
+  method normalize_columnrow_parameter.
+
+    if ( ( ip_column is not initial or ip_row is not initial ) and ip_columnrow is not initial )
+        or ( ip_column is initial and ip_row is initial and ip_columnrow is initial ).
+      raise exception type zcx_excel
+        exporting
+          error = 'Please provide either row and column, or cell reference'.
+    endif.
+
+    if ip_columnrow is not initial.
+      zcl_excel_common=>convert_columnrow2column_a_row(
+        exporting
+          i_columnrow  = ip_columnrow
+        importing
+          e_column_int = ep_column
+          e_row        = ep_row ).
+    else.
+      ep_column = zcl_excel_common=>convert_column2int( ip_column ).
+      ep_row    = ip_row.
+    endif.
+
+  endmethod.
+
+
   method normalize_column_heading_texts.
     data: lt_field_catalog      type zif_excel_data_decl=>zexcel_t_fieldcatalog,
           lv_value_lowercase    type string,
@@ -3369,30 +3363,6 @@ class zcl_excel_worksheet implementation.
     endloop.
 
     result = lt_field_catalog.
-
-  endmethod.
-
-
-  method normalize_columnrow_parameter.
-
-    if ( ( ip_column is not initial or ip_row is not initial ) and ip_columnrow is not initial )
-        or ( ip_column is initial and ip_row is initial and ip_columnrow is initial ).
-      raise exception type zcx_excel
-        exporting
-          error = 'Please provide either row and column, or cell reference'.
-    endif.
-
-    if ip_columnrow is not initial.
-      zcl_excel_common=>convert_columnrow2column_a_row(
-        exporting
-          i_columnrow  = ip_columnrow
-        importing
-          e_column_int = ep_column
-          e_row        = ep_row ).
-    else.
-      ep_column = zcl_excel_common=>convert_column2int( ip_column ).
-      ep_row    = ip_row.
-    endif.
 
   endmethod.
 
@@ -3800,6 +3770,7 @@ class zcl_excel_worksheet implementation.
     endif.
   endmethod.                    "SET_AREA_STYLE
 
+
   method set_cell.
     data lv_column        type zif_excel_data_decl=>zexcel_cell_column.
     data ls_sheet_content type zif_excel_data_decl=>zexcel_s_cell_data.
@@ -3868,16 +3839,13 @@ class zcl_excel_worksheet implementation.
     " if data type is passed just write the value. Otherwise map abap type to excel and perform conversion
     " IP_DATA_TYPE is passed by excel reader so source types are preserved
     " First we get reference into local var.
-    if ip_conv_exit_length = abap_true.
-      lo_value = create_data_conv_exit_length( ip_value ).
-    else.
-      lo_type ?= cl_abap_datadescr=>describe_by_data( ip_value ).
-      try.
-          create data lo_value type handle lo_type.
-        catch cx_sy_create_data_error.
-          create data lo_value type string.
-      endtry.
-    endif.
+    lo_type ?= cl_abap_datadescr=>describe_by_data( ip_value ).
+    try.
+        create data lo_value type handle lo_type.
+      catch cx_sy_create_data_error.
+        create data lo_value type string.
+    endtry.
+
     assign lo_value->* to <fs_value>.
     if sy-subrc = 0.
       <fs_value> = ip_value.
@@ -3897,10 +3865,7 @@ class zcl_excel_worksheet implementation.
                                     ep_value_type = lv_value_type ).
         endif.
 
-        assign ('CL_ABAP_TYPEDESCR=>TYPEKIND_INT8') to <fs_typekind_int8>.
-        if sy-subrc <> 0.
-          assign space to <fs_typekind_int8>. " not used as typekind!
-        endif.
+        assign cl_abap_typedescr=>typekind_int8 to <fs_typekind_int8>.
 
         case lv_value_type.
           when cl_abap_typedescr=>typekind_int or cl_abap_typedescr=>typekind_int1 or cl_abap_typedescr=>typekind_int2
@@ -4210,23 +4175,6 @@ class zcl_excel_worksheet implementation.
     endif.
 
   endmethod.                    "SET_CELL_STYLE
-
-
-  method set_table_reference.
-
-    field-symbols: <ls_sheet_content> type zif_excel_data_decl=>zexcel_s_cell_data.
-
-    read table sheet_content assigning <ls_sheet_content> with key cell_row    = ip_row
-                                                                   cell_column = ip_column.
-    if sy-subrc = 0.
-      <ls_sheet_content>-table           = ir_table.
-      <ls_sheet_content>-table_fieldname = ip_fieldname.
-      <ls_sheet_content>-table_header    = ip_header.
-    else.
-      zcx_excel=>raise_text( 'Cell not found' ).
-    endif.
-
-  endmethod.
 
 
   method set_column_width.
@@ -4539,6 +4487,23 @@ class zcl_excel_worksheet implementation.
 *    ENDLOOP.
 
   endmethod.                    "SET_TABLE
+
+
+  method set_table_reference.
+
+    field-symbols: <ls_sheet_content> type zif_excel_data_decl=>zexcel_s_cell_data.
+
+    read table sheet_content assigning <ls_sheet_content> with key cell_row    = ip_row
+                                                                   cell_column = ip_column.
+    if sy-subrc = 0.
+      <ls_sheet_content>-table           = ir_table.
+      <ls_sheet_content>-table_fieldname = ip_fieldname.
+      <ls_sheet_content>-table_header    = ip_header.
+    else.
+      zcx_excel=>raise_text( 'Cell not found' ).
+    endif.
+
+  endmethod.
 
 
   method set_title.
