@@ -85,16 +85,6 @@ CLASS zcl_excel_drawing DEFINITION
         !ip_media_type TYPE string
         !ip_width      TYPE int4 DEFAULT 0
         !ip_height     TYPE int4 DEFAULT 0 .
-*    METHODS set_media_mime
-*      IMPORTING
-*        !ip_io     TYPE skwf_io
-*        !ip_width  TYPE int4
-*        !ip_height TYPE int4 .
-*    METHODS set_media_www
-*      IMPORTING
-*        !ip_key    TYPE wwwdatatab
-*        !ip_width  TYPE int4
-*        !ip_height TYPE int4 .
     METHODS set_position
       IMPORTING
         !ip_from_row type zif_excel_data_decl=>zexcel_cell_row
@@ -128,16 +118,10 @@ CLASS zcl_excel_drawing DEFINITION
     DATA type type zif_excel_data_decl=>zexcel_drawing_type VALUE type_image. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  . " .
     DATA index TYPE string .
     DATA anchor type zif_excel_data_decl=>zexcel_drawing_anchor VALUE anchor_one_cell. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  . " .
-    CONSTANTS c_media_source_www TYPE c VALUE 1.            "#EC NOTEXT
-    CONSTANTS c_media_source_xstring TYPE c VALUE 0.        "#EC NOTEXT
-    CONSTANTS c_media_source_mime TYPE c VALUE 2.           "#EC NOTEXT
     DATA guid type zif_excel_data_decl=>zexcel_guid .
     DATA media TYPE xstring .
-*    DATA media_key_www TYPE wwwdatatab .
     DATA media_name TYPE string .
-    DATA media_source TYPE c .
     DATA media_type TYPE string .
-*    DATA io TYPE skwf_io .
     DATA from_loc type zif_excel_data_decl=>zexcel_drawing_location .
     DATA to_loc type zif_excel_data_decl=>zexcel_drawing_location .
     DATA size type zif_excel_data_decl=>zexcel_drawing_size .
@@ -220,65 +204,7 @@ CLASS ZCL_EXCEL_DRAWING IMPLEMENTATION.
 
 
   METHOD get_media.
-
-*    DATA: lv_language LIKE sy-langu.
-*    DATA: lt_bin_mime TYPE sdokcntbins.
-*    DATA: lt_mime          TYPE tsfmime,
-*          lv_filesize      TYPE i,
-*          lv_filesizec(10).
-
-    CASE media_source.
-      WHEN c_media_source_xstring.
-        r_media = media.
-      WHEN c_media_source_www.
-*        CALL FUNCTION 'WWWDATA_IMPORT'
-*          EXPORTING
-*            key    = media_key_www
-*          TABLES
-*            mime   = lt_mime
-*          EXCEPTIONS
-*            OTHERS = 1.
-*
-*        CALL FUNCTION 'WWWPARAMS_READ'
-*          EXPORTING
-*            relid = media_key_www-relid
-*            objid = media_key_www-objid
-*            name  = 'filesize'
-*          IMPORTING
-*            value = lv_filesizec.
-*
-*        lv_filesize = lv_filesizec.
-*        CALL FUNCTION 'SCMS_BINARY_TO_XSTRING'
-*          EXPORTING
-*            input_length = lv_filesize
-*          IMPORTING
-*            buffer       = r_media
-*          TABLES
-*            binary_tab   = lt_mime
-*          EXCEPTIONS
-*            failed       = 1
-*            OTHERS       = 2.
-      WHEN c_media_source_mime.
-*        lv_language = sy-langu.
-*        cl_wb_mime_repository=>load_mime( EXPORTING
-*                                            io        = me->io
-*                                          IMPORTING
-*                                            filesize  = lv_filesize
-*                                            bin_data  = lt_bin_mime
-*                                          CHANGING
-*                                            language  = lv_language ).
-*
-*        CALL FUNCTION 'SCMS_BINARY_TO_XSTRING'
-*          EXPORTING
-*            input_length = lv_filesize
-*          IMPORTING
-*            buffer       = r_media
-*          TABLES
-*            binary_tab   = lt_bin_mime
-*          EXCEPTIONS
-*            failed       = 1
-*            OTHERS       = 2.
-    ENDCASE.
+    r_media = media.
   ENDMETHOD.
 
 
@@ -1041,58 +967,12 @@ CLASS ZCL_EXCEL_DRAWING IMPLEMENTATION.
       media = ip_media.
     ENDIF.
     media_type = ip_media_type.
-    media_source = c_media_source_xstring.
     IF ip_width IS SUPPLIED.
       size-width  = ip_width.
     ENDIF.
     IF ip_height IS SUPPLIED.
       size-height = ip_height.
     ENDIF.
-
-
-*  METHOD set_media_mime.
-*
-*    DATA: lv_language LIKE sy-langu.
-*
-*    io = ip_io.
-*    media_source = c_media_source_mime.
-*    size-width  = ip_width.
-*    size-height = ip_height.
-*
-*    lv_language = sy-langu.
-*    cl_wb_mime_repository=>load_mime( EXPORTING
-*                                        io        = ip_io
-*                                      IMPORTING
-*                                        filename  = media_name
-*                                        "mimetype = media_type
-*                                      CHANGING
-*                                        language  = lv_language  ).
-*
-*    SPLIT media_name AT '.' INTO media_name media_type.
-*
-*  ENDMETHOD.
-*
-*
-*  METHOD set_media_www.
-*    DATA: lv_value(20).
-*
-*    media_key_www = ip_key.
-*    media_source = c_media_source_www.
-*
-*    CALL FUNCTION 'WWWPARAMS_READ'
-*      EXPORTING
-*        relid = media_key_www-relid
-*        objid = media_key_www-objid
-*        name  = 'fileextension'
-*      IMPORTING
-*        value = lv_value.
-*    media_type = lv_value.
-*    SHIFT media_type LEFT DELETING LEADING '.'.
-*
-*    size-width  = ip_width.
-*    size-height = ip_height.
-*  ENDMETHOD.
-
   ENDMETHOD.
 
   METHOD set_position.
