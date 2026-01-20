@@ -471,6 +471,7 @@ class zcl_excel_worksheet definition
         !ip_hyperlink         type ref to zcl_excel_hyperlink optional
         !ip_data_type         type zif_excel_data_decl=>zexcel_cell_data_type optional
         !ip_abap_type         type abap_typekind optional
+        !ip_curr_uom_incell   type abap_boolean default abap_true
         !ip_currency          type waers_curc optional
         !ip_textvalue         type csequence optional
         !ip_unitofmeasure     type meins optional
@@ -868,54 +869,47 @@ class zcl_excel_worksheet implementation.
     styles_cond->add( eo_style_cond ).
   endmethod.
 
-
   method bind_table.
-*--------------------------------------------------------------------*
-* issue #230   - Pimp my Code
-*              - Stefan Schmöcker,      (wi p)              2012-12-01
-*              - ...
-*          aligning code
-*          message made to support multilinguality
-*--------------------------------------------------------------------*
-* issue #237   - Check if overlapping areas exist
-*              - Alessandro Iannacci                        2012-12-01
-* changes:     - Added raise if overlaps are detected
-*--------------------------------------------------------------------*
+    " ---------------------------------------------------------------------
+    " issue #230   - Pimp my Code
+    "              - Stefan Schmöcker,      (wi p)              2012-12-01
+    "              - ...
+    "          aligning code
+    "          message made to support multilinguality
+    " ---------------------------------------------------------------------
+    " issue #237   - Check if overlapping areas exist
+    "              - Alessandro Iannacci                        2012-12-01
+    " changes:     - Added raise if overlaps are detected
+    " ---------------------------------------------------------------------
 
-    constants:
-      lc_top_left_column type zif_excel_data_decl=>zexcel_cell_column_alpha value 'A',
-      lc_top_left_row    type zif_excel_data_decl=>zexcel_cell_row value 1,
-      lc_no_currency     type waers value is initial,
-      lc_no_unit         type meins value is initial.
+    constants lc_top_left_column type zif_excel_data_decl=>zexcel_cell_column_alpha value 'A'.
+    constants lc_top_left_row    type zif_excel_data_decl=>zexcel_cell_row          value 1.
+    constants lc_no_currency     type waers                                         value is initial.
+    constants lc_no_unit         type meins                                         value is initial.
 
-    data:
-      lv_row_int              type zif_excel_data_decl=>zexcel_cell_row,
-      lv_first_row            type zif_excel_data_decl=>zexcel_cell_row,
-      lv_last_row             type zif_excel_data_decl=>zexcel_cell_row,
-      lv_column_int           type zif_excel_data_decl=>zexcel_cell_column,
-      lv_column_alpha         type zif_excel_data_decl=>zexcel_cell_column_alpha,
-      lt_field_catalog        type zif_excel_data_decl=>zexcel_t_fieldcatalog,
-      lv_id                   type i,
-      lv_formula              type string,
-      ls_settings             type zif_excel_data_decl=>zexcel_s_table_settings,
-      lo_table                type ref to zcl_excel_table,
-      lv_value_lowercase      type string,
-      lv_syindex              type c length 3,
-      lo_iterator             type ref to zcl_excel_collection_iterator,
-      lo_style_cond           type ref to zcl_excel_style_cond,
-      lo_curtable             type ref to zcl_excel_table,
-      lt_other_table_settings type ty_table_settings.
-    data: ls_column_formula type mty_s_column_formula,
-          lv_mincol         type i.
+    data lv_row_int              type zif_excel_data_decl=>zexcel_cell_row.
+    data lv_first_row            type zif_excel_data_decl=>zexcel_cell_row.
+    data lv_last_row             type zif_excel_data_decl=>zexcel_cell_row.
+    data lv_column_int           type zif_excel_data_decl=>zexcel_cell_column.
+    data lv_column_alpha         type zif_excel_data_decl=>zexcel_cell_column_alpha.
+    data lt_field_catalog        type zif_excel_data_decl=>zexcel_t_fieldcatalog.
+    data lv_id                   type i.
+    data lv_formula              type string.
+    data ls_settings             type zif_excel_data_decl=>zexcel_s_table_settings.
+    data lo_table                type ref to zcl_excel_table.
+    data lo_iterator             type ref to zcl_excel_collection_iterator.
+    data lo_style_cond           type ref to zcl_excel_style_cond.
+    data lo_curtable             type ref to zcl_excel_table.
+    data lt_other_table_settings type ty_table_settings.
+    data ls_column_formula       type mty_s_column_formula.
+    data lv_mincol               type i.
 
-    field-symbols:
-      <ls_field_catalog>        type zif_excel_data_decl=>zexcel_s_fieldcatalog,
-      <ls_field_catalog_custom> type zif_excel_data_decl=>zexcel_s_fieldcatalog,
-      <fs_table_line>           type any,
-      <fs_fldval>               type any,
-      <fs_fldval_currency>      type waers,
-      <fs_fldval_uom>           type meins,
-      <fs_fldval_text>          type string.
+    field-symbols <ls_field_catalog>   type zif_excel_data_decl=>zexcel_s_fieldcatalog.
+    field-symbols <fs_table_line>      type any.
+    field-symbols <fs_fldval>          type any.
+    field-symbols <fs_fldval_currency> type waers.
+    field-symbols <fs_fldval_uom>      type meins.
+    field-symbols <fs_fldval_text>     type string.
 
     ls_settings = is_table_settings.
 
@@ -939,68 +933,64 @@ class zcl_excel_worksheet implementation.
 
     sort lt_field_catalog by position.
 
-    calculate_table_bottom_right(
-      exporting
-        ip_table         = ip_table
-        it_field_catalog = lt_field_catalog
-      changing
-        cs_settings      = ls_settings ).
+    calculate_table_bottom_right( exporting ip_table         = ip_table
+                                            it_field_catalog = lt_field_catalog
+                                  changing  cs_settings      = ls_settings ).
 
-* Check if overlapping areas exist
+    " Check if overlapping areas exist
 
-    lo_iterator = me->tables->get_iterator( ).
-    while lo_iterator->has_next( ) eq abap_true.
+    lo_iterator = tables->get_iterator( ).
+    while lo_iterator->has_next( ) = abap_true.
       lo_curtable ?= lo_iterator->get_next( ).
       append lo_curtable->settings to lt_other_table_settings.
     endwhile.
 
-    check_table_overlapping(
-        is_table_settings       = ls_settings
-        it_other_table_settings = lt_other_table_settings ).
+    check_table_overlapping( is_table_settings       = ls_settings
+                             it_other_table_settings = lt_other_table_settings ).
 
-* Start filling the table
+    " Start filling the table
 
-    create object lo_table.
+    lo_table = new #( ).
     lo_table->settings = ls_settings.
     lo_table->set_data( ir_data = ip_table ).
-    lv_id = me->excel->get_next_table_id( ).
+    lv_id = excel->get_next_table_id( ).
     lo_table->set_id( iv_id = lv_id ).
 
-    me->tables->add( lo_table ).
+    tables->add( lo_table ).
 
     lv_column_int = zcl_excel_common=>convert_column2int( ls_settings-top_left_column ).
     lv_row_int = ls_settings-top_left_row.
 
-    lt_field_catalog = normalize_column_heading_texts(
-          iv_default_descr = iv_default_descr
-          it_field_catalog = lt_field_catalog ).
+    lt_field_catalog = normalize_column_heading_texts( iv_default_descr = iv_default_descr
+                                                       it_field_catalog = lt_field_catalog ).
 
-* It is better to loop column by column (only visible column)
+    " It is better to loop column by column (only visible column)
     loop at lt_field_catalog assigning <ls_field_catalog>.
 
       lv_column_alpha = zcl_excel_common=>convert_column2alpha( lv_column_int ).
 
       if <ls_field_catalog>-width is not initial.
-        set_column_width( ip_column = lv_column_alpha ip_width_fix = <ls_field_catalog>-width ).
+        set_column_width( ip_column    = lv_column_alpha
+                          ip_width_fix = <ls_field_catalog>-width ).
       endif.
 
       " First of all write column header
       if <ls_field_catalog>-style_header is not initial.
-        me->set_cell( ip_column = lv_column_alpha
-                      ip_row    = lv_row_int
-                      ip_value  = <ls_field_catalog>-column_name
-                      ip_style  = <ls_field_catalog>-style_header ).
+        set_cell( ip_column = lv_column_alpha
+                  ip_row    = lv_row_int
+                  ip_value  = <ls_field_catalog>-column_name
+                  ip_style  = <ls_field_catalog>-style_header ).
       else.
-        me->set_cell( ip_column = lv_column_alpha
-                      ip_row    = lv_row_int
-                      ip_value  = <ls_field_catalog>-column_name ).
+        set_cell( ip_column = lv_column_alpha
+                  ip_row    = lv_row_int
+                  ip_value  = <ls_field_catalog>-column_name ).
       endif.
 
-      me->set_table_reference( ip_column    = lv_column_int
-                               ip_row       = lv_row_int
-                               ir_table     = lo_table
-                               ip_fieldname = <ls_field_catalog>-fieldname
-                               ip_header    = abap_true ).
+      set_table_reference( ip_column    = lv_column_int
+                           ip_row       = lv_row_int
+                           ir_table     = lo_table
+                           ip_fieldname = <ls_field_catalog>-fieldname
+                           ip_header    = abap_true ).
 
       if <ls_field_catalog>-column_formula is not initial.
         ls_column_formula-id                     = lines( column_formulas ) + 1.
@@ -1009,7 +999,8 @@ class zcl_excel_worksheet implementation.
         ls_column_formula-table_top_left_row     = lo_table->settings-top_left_row.
         ls_column_formula-table_bottom_right_row = lo_table->settings-bottom_right_row.
         ls_column_formula-table_left_column_int  = lv_mincol.
-        ls_column_formula-table_right_column_int = zcl_excel_common=>convert_column2int( lo_table->settings-bottom_right_column ).
+        ls_column_formula-table_right_column_int = zcl_excel_common=>convert_column2int(
+                                                       lo_table->settings-bottom_right_column ).
         insert ls_column_formula into table column_formulas.
       endif.
 
@@ -1019,54 +1010,54 @@ class zcl_excel_worksheet implementation.
         assign component <ls_field_catalog>-fieldname of structure <fs_table_line> to <fs_fldval>.
 
         " issue #290 Add formula support in table
-        if <ls_field_catalog>-formula eq abap_true.
+        if <ls_field_catalog>-formula = abap_true.
           if <ls_field_catalog>-style is not initial.
             if <ls_field_catalog>-abap_type is not initial.
-              me->set_cell( ip_column   = lv_column_alpha
-                          ip_row      = lv_row_int
-                          ip_formula  = <fs_fldval>
-                          ip_abap_type = <ls_field_catalog>-abap_type
-                          ip_style    = <ls_field_catalog>-style ).
+              set_cell( ip_column    = lv_column_alpha
+                        ip_row       = lv_row_int
+                        ip_formula   = <fs_fldval>
+                        ip_abap_type = <ls_field_catalog>-abap_type
+                        ip_style     = <ls_field_catalog>-style ).
             else.
-              me->set_cell( ip_column   = lv_column_alpha
-                            ip_row      = lv_row_int
-                            ip_formula  = <fs_fldval>
-                            ip_style    = <ls_field_catalog>-style ).
+              set_cell( ip_column  = lv_column_alpha
+                        ip_row     = lv_row_int
+                        ip_formula = <fs_fldval>
+                        ip_style   = <ls_field_catalog>-style ).
             endif.
           elseif <ls_field_catalog>-abap_type is not initial.
-            me->set_cell( ip_column   = lv_column_alpha
-                          ip_row      = lv_row_int
-                          ip_formula  = <fs_fldval>
-                          ip_abap_type = <ls_field_catalog>-abap_type ).
+            set_cell( ip_column    = lv_column_alpha
+                      ip_row       = lv_row_int
+                      ip_formula   = <fs_fldval>
+                      ip_abap_type = <ls_field_catalog>-abap_type ).
           else.
-            me->set_cell( ip_column   = lv_column_alpha
-                          ip_row      = lv_row_int
-                          ip_formula  = <fs_fldval> ).
+            set_cell( ip_column  = lv_column_alpha
+                      ip_row     = lv_row_int
+                      ip_formula = <fs_fldval> ).
           endif.
         elseif <ls_field_catalog>-column_formula is not initial.
           " Column formulas
           if <ls_field_catalog>-style is not initial.
             if <ls_field_catalog>-abap_type is not initial.
-              me->set_cell( ip_column            = lv_column_alpha
-                            ip_row               = lv_row_int
-                            ip_column_formula_id = ls_column_formula-id
-                            ip_abap_type         = <ls_field_catalog>-abap_type
-                            ip_style             = <ls_field_catalog>-style ).
+              set_cell( ip_column            = lv_column_alpha
+                        ip_row               = lv_row_int
+                        ip_column_formula_id = ls_column_formula-id
+                        ip_abap_type         = <ls_field_catalog>-abap_type
+                        ip_style             = <ls_field_catalog>-style ).
             else.
-              me->set_cell( ip_column            = lv_column_alpha
-                            ip_row               = lv_row_int
-                            ip_column_formula_id = ls_column_formula-id
-                            ip_style             = <ls_field_catalog>-style ).
+              set_cell( ip_column            = lv_column_alpha
+                        ip_row               = lv_row_int
+                        ip_column_formula_id = ls_column_formula-id
+                        ip_style             = <ls_field_catalog>-style ).
             endif.
           elseif <ls_field_catalog>-abap_type is not initial.
-            me->set_cell( ip_column             = lv_column_alpha
-                          ip_row                = lv_row_int
-                          ip_column_formula_id  = ls_column_formula-id
-                          ip_abap_type          = <ls_field_catalog>-abap_type ).
+            set_cell( ip_column            = lv_column_alpha
+                      ip_row               = lv_row_int
+                      ip_column_formula_id = ls_column_formula-id
+                      ip_abap_type         = <ls_field_catalog>-abap_type ).
           else.
-            me->set_cell( ip_column            = lv_column_alpha
-                          ip_row               = lv_row_int
-                          ip_column_formula_id = ls_column_formula-id ).
+            set_cell( ip_column            = lv_column_alpha
+                      ip_row               = lv_row_int
+                      ip_column_formula_id = ls_column_formula-id ).
           endif.
         else.
           if <ls_field_catalog>-currency_column is initial.
@@ -1087,103 +1078,103 @@ class zcl_excel_worksheet implementation.
 
           if <ls_field_catalog>-style is not initial.
             if <ls_field_catalog>-abap_type is not initial.
-              me->set_cell( ip_column           = lv_column_alpha
-                            ip_row              = lv_row_int
-                            ip_value            = <fs_fldval>
-                            ip_abap_type        = <ls_field_catalog>-abap_type
-                            ip_currency         = <fs_fldval_currency>
-                            ip_unitofmeasure = <fs_fldval_uom>
-                            ip_textvalue     = <fs_fldval_text>
-                            ip_style            = <ls_field_catalog>-style ).
+              set_cell( ip_column        = lv_column_alpha
+                        ip_row           = lv_row_int
+                        ip_value         = <fs_fldval>
+                        ip_abap_type     = <ls_field_catalog>-abap_type
+                        ip_currency      = <fs_fldval_currency>
+                        ip_unitofmeasure = <fs_fldval_uom>
+                        ip_textvalue     = <fs_fldval_text>
+                        ip_style         = <ls_field_catalog>-style ).
             else.
-              me->set_cell( ip_column = lv_column_alpha
-                            ip_row    = lv_row_int
-                            ip_value  = <fs_fldval>
-                            ip_currency = <fs_fldval_currency>
-                            ip_unitofmeasure = <fs_fldval_uom>
-                            ip_textvalue     = <fs_fldval_text>
-                            ip_style  = <ls_field_catalog>-style ).
+              set_cell( ip_column        = lv_column_alpha
+                        ip_row           = lv_row_int
+                        ip_value         = <fs_fldval>
+                        ip_currency      = <fs_fldval_currency>
+                        ip_unitofmeasure = <fs_fldval_uom>
+                        ip_textvalue     = <fs_fldval_text>
+                        ip_style         = <ls_field_catalog>-style ).
             endif.
           else.
             if <ls_field_catalog>-abap_type is not initial.
-              me->set_cell( ip_column = lv_column_alpha
-                          ip_row    = lv_row_int
-                          ip_abap_type = <ls_field_catalog>-abap_type
-                          ip_currency  = <fs_fldval_currency>
-                            ip_unitofmeasure = <fs_fldval_uom>
-                            ip_textvalue     = <fs_fldval_text>
-                          ip_value  = <fs_fldval> ).
+              set_cell( ip_column        = lv_column_alpha
+                        ip_row           = lv_row_int
+                        ip_abap_type     = <ls_field_catalog>-abap_type
+                        ip_currency      = <fs_fldval_currency>
+                        ip_unitofmeasure = <fs_fldval_uom>
+                        ip_textvalue     = <fs_fldval_text>
+                        ip_value         = <fs_fldval> ).
             else.
-              me->set_cell( ip_column = lv_column_alpha
-                            ip_row    = lv_row_int
-                            ip_currency = <fs_fldval_currency>
-                            ip_unitofmeasure = <fs_fldval_uom>
-                            ip_textvalue     = <fs_fldval_text>
-                            ip_value  = <fs_fldval> ).
+              set_cell( ip_column        = lv_column_alpha
+                        ip_row           = lv_row_int
+                        ip_currency      = <fs_fldval_currency>
+                        ip_unitofmeasure = <fs_fldval_uom>
+                        ip_textvalue     = <fs_fldval_text>
+                        ip_value         = <fs_fldval> ).
             endif.
           endif.
         endif.
         lv_row_int += 1.
 
       endloop.
-      if sy-subrc <> 0 and iv_no_line_if_empty = abap_false. "create empty row if table has no data
-        me->set_cell( ip_column = lv_column_alpha
-                      ip_row    = lv_row_int
-                      ip_value  = space ).
+      if sy-subrc <> 0 and iv_no_line_if_empty = abap_false. " create empty row if table has no data
+        set_cell( ip_column = lv_column_alpha
+                  ip_row    = lv_row_int
+                  ip_value  = space ).
         lv_row_int += 1.
       endif.
 
-*--------------------------------------------------------------------*
+      " ---------------------------------------------------------------------
       " totals
-*--------------------------------------------------------------------*
+      " ---------------------------------------------------------------------
       if <ls_field_catalog>-totals_function is not initial.
-        lv_formula = lo_table->get_totals_formula( ip_column = <ls_field_catalog>-column_name ip_function = <ls_field_catalog>-totals_function ).
+        lv_formula = lo_table->get_totals_formula( ip_column   = <ls_field_catalog>-column_name
+                                                   ip_function = <ls_field_catalog>-totals_function ).
         if <ls_field_catalog>-style_total is not initial.
-          me->set_cell( ip_column   = lv_column_alpha
-                        ip_row      = lv_row_int
-                        ip_formula  = lv_formula
-                        ip_style    = <ls_field_catalog>-style_total ).
+          set_cell( ip_column  = lv_column_alpha
+                    ip_row     = lv_row_int
+                    ip_formula = lv_formula
+                    ip_style   = <ls_field_catalog>-style_total ).
         else.
-          me->set_cell( ip_column   = lv_column_alpha
-                        ip_row      = lv_row_int
-                        ip_formula  = lv_formula ).
+          set_cell( ip_column  = lv_column_alpha
+                    ip_row     = lv_row_int
+                    ip_formula = lv_formula ).
         endif.
       endif.
 
       lv_row_int = ls_settings-top_left_row.
       lv_column_int += 1.
 
-*--------------------------------------------------------------------*
+      " ---------------------------------------------------------------------
       " conditional formatting
-*--------------------------------------------------------------------*
+      " ---------------------------------------------------------------------
       if <ls_field_catalog>-style_cond is not initial.
-        lv_first_row    = ls_settings-top_left_row + 1. " +1 to exclude header
-        lv_last_row     = ls_settings-bottom_right_row.
-        lo_style_cond = me->get_style_cond( <ls_field_catalog>-style_cond ).
-        lo_style_cond->set_range( ip_start_column  = lv_column_alpha
-                                  ip_start_row     = lv_first_row
-                                  ip_stop_column   = lv_column_alpha
-                                  ip_stop_row      = lv_last_row ).
+        lv_first_row = ls_settings-top_left_row + 1. " +1 to exclude header
+        lv_last_row  = ls_settings-bottom_right_row.
+        lo_style_cond = get_style_cond( <ls_field_catalog>-style_cond ).
+        lo_style_cond->set_range( ip_start_column = lv_column_alpha
+                                  ip_start_row    = lv_first_row
+                                  ip_stop_column  = lv_column_alpha
+                                  ip_stop_row     = lv_last_row ).
       endif.
 
     endloop.
 
-*--------------------------------------------------------------------*
+    " ---------------------------------------------------------------------
     " Set field catalog
-*--------------------------------------------------------------------*
+    " ---------------------------------------------------------------------
     lo_table->fieldcat = lt_field_catalog[].
 
     es_table_settings = ls_settings.
     es_table_settings-bottom_right_column = lv_column_alpha.
     " >> Issue #291
     if ip_table is initial.
-      es_table_settings-bottom_right_row    = ls_settings-top_left_row + 2.           "Last rows
+      es_table_settings-bottom_right_row = ls_settings-top_left_row + 2.           " Last rows
     else.
-      es_table_settings-bottom_right_row    = ls_settings-bottom_right_row + 1. "Last rows
+      es_table_settings-bottom_right_row = ls_settings-bottom_right_row + 1. " Last rows
     endif.
     " << Issue #291
-
-  endmethod.                    "BIND_TABLE
+  endmethod.
 
 
   method calculate_cell_width.
@@ -3380,7 +3371,6 @@ class zcl_excel_worksheet implementation.
     endif.
   endmethod.                    "SET_AREA_STYLE
 
-
   method set_cell.
     data lv_column        type zif_excel_data_decl=>zexcel_cell_column.
     data ls_sheet_content type zif_excel_data_decl=>zexcel_s_cell_data.
@@ -3394,16 +3384,15 @@ class zcl_excel_worksheet implementation.
     data lt_rtf           type zif_excel_data_decl=>zexcel_t_rtf.
     data lo_value         type ref to data.
     data lo_value_new     type ref to data.
-    data lv_newformat type zif_excel_data_decl=>zexcel_number_format.
-    field-symbols <fs_sheet_content>  type zif_excel_data_decl=>zexcel_s_cell_data.
-    field-symbols <fs_numeric>        type numeric.
-    field-symbols <fs_date>           type d.
-    field-symbols <fs_time>           type t.
-    field-symbols <fs_value>          type simple.
-    field-symbols <fs_typekind_int8>  type abap_typekind.
-    field-symbols <fs_column_formula> type mty_s_column_formula.
-    field-symbols <ls_fieldcat>       type zif_excel_data_decl=>zexcel_s_fieldcatalog.
-    field-symbols <lv_utclong>        type simple.
+    data lv_newformat     type zif_excel_data_decl=>zexcel_number_format.
+    field-symbols <fs_sheet_content> type zif_excel_data_decl=>zexcel_s_cell_data.
+    field-symbols <fs_numeric>       type numeric.
+    field-symbols <fs_date>          type d.
+    field-symbols <fs_time>          type t.
+    field-symbols <fs_value>         type simple.
+    field-symbols <fs_typekind_int8> type abap_typekind.
+    field-symbols <ls_fieldcat>      type zif_excel_data_decl=>zexcel_s_fieldcatalog.
+    field-symbols <lv_utclong>       type simple.
 
     if     ip_value             is not supplied
        and ip_formula           is not supplied
@@ -3481,9 +3470,7 @@ class zcl_excel_worksheet implementation.
           when cl_abap_typedescr=>typekind_int or cl_abap_typedescr=>typekind_int1 or cl_abap_typedescr=>typekind_int2
             or <fs_typekind_int8>. " Allow INT8 types columns
             if lv_value_type = <fs_typekind_int8>.
-              call method cl_abap_elemdescr=>('GET_INT8')
-                receiving
-                  p_result = lo_addit.
+              lo_addit = cl_abap_elemdescr=>get_int8( ).
             else.
               lo_addit = cl_abap_elemdescr=>get_i( ).
             endif.
@@ -3703,18 +3690,25 @@ class zcl_excel_worksheet implementation.
       clear lv_newformat.
       if ip_currency is not initial.
         read table zcl_excel_common=>lt_currs into data(ls_curr) with key curr = ip_currency binary search.
-        lv_newformat = |* #,##0{ cond string( when ls_curr-dec is not initial then
-          '.' && repeat( val = '0' occ = ls_curr-dec )
-          else space ) }" { ip_currency }"|.
+        lv_newformat = |* #,##0| && cond string( when ls_curr-dec is not initial
+                                                 then '.' && repeat( val = '0'
+                                                                     occ = ls_curr-dec )
+                                                 else space )
+                                 && cond string( when ip_curr_uom_incell is not initial
+                                                 then |" { ip_currency }"| ).
+
       elseif ip_unitofmeasure is not initial.
         read table zcl_excel_common=>lt_uoms into data(ls_uom) with key uom = ip_unitofmeasure binary search.
-        lv_newformat = |* #,##0{ cond string( when ls_uom-dec is not initial then
-          '.' && repeat( val = '0' occ = ls_uom-dec )
-          else space ) }" { ls_uom-uome }"|.
+        lv_newformat = |* #,##0| && cond string( when ls_uom-dec is not initial
+                                                 then '.' && repeat( val = '0'
+                                                                     occ = ls_uom-dec )
+                                                 else space )
+                                 && cond string( when ip_curr_uom_incell is not initial
+                                                 then |" { ls_uom-uome }"| ).
       endif.
       if lv_newformat is not initial.
-        change_cell_style( ip_column = lv_column
-                           ip_row    = lv_row
+        change_cell_style( ip_column                    = lv_column
+                           ip_row                       = lv_row
                            ip_number_format_format_code = lv_newformat ).
       endif.
     endif.

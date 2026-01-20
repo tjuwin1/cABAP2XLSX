@@ -7,8 +7,8 @@ class zcl_excel_common definition
 *"* do not include other source files here!!!
   public section.
     types: begin of ty_uom,
-             uom type i_unitofmeasure-UnitOfMeasure,
-             dec type i_unitofmeasure-UnitOfMeasureNumberOfDecimals,
+             uom  type i_unitofmeasure-UnitOfMeasure,
+             dec  type i_unitofmeasure-UnitOfMeasureNumberOfDecimals,
              uome type i_unitofmeasure-UnitOfMeasure_E,
            end of ty_uom,
 
@@ -27,8 +27,8 @@ class zcl_excel_common definition
     "CLASS-DATA o_conv TYPE REF TO cl_abap_conv_out_ce .
     constants c_excel_1900_leap_year type d value '19000228'. "#EC NOTEXT
     class-data c_xlsx_file_filter type string value 'Excel Workbook (*.xlsx)|*.xlsx|'. "#EC NOTEXT .  .  .  .  .  .  . " .
-    class-data lt_uoms type standard table of ty_uom.
-    class-data lt_currs type standard table of ty_curr.
+    class-data lt_uoms type sorted table of ty_uom with unique key uom read-only.
+    class-data lt_currs type sorted table of ty_curr with unique key curr read-only.
     class-methods class_constructor .
     class-methods convert_column2alpha
       importing
@@ -304,6 +304,12 @@ class zcl_excel_common implementation.
 
   method class_constructor.
     c_xlsx_file_filter = 'Excel Workbook (*.xlsx)|*.xlsx|'(005).
+
+    select unitofmeasure, unitofmeasurenumberofdecimals,
+        case when UnitOfMeasure_E is initial then UnitOfMeasure else UnitOfMeasure_E end as UnitOfMeasure_E
+        from i_unitofmeasure order by unitofmeasure into table @lt_uoms.
+
+    select currency, decimals from i_currency order by currency into table @lt_currs.
   endmethod.
 
 
@@ -818,14 +824,8 @@ class zcl_excel_common implementation.
     data: lv_value_c type c length 100.
 
     if ip_currency is not initial.
-      if lt_currs is initial.
-        select currency, decimals from i_currency order by currency into table @lt_currs.
-      endif.
       lv_value_c = |{ ip_value currency = ip_currency }|.
     elseif ip_unitofmeasure is not initial.
-      if lt_uoms is initial.
-        select unitofmeasure, unitofmeasurenumberofdecimals, UnitOfMeasure_E from i_unitofmeasure order by unitofmeasure into table @lt_uoms.
-      endif.
       read table lt_uoms into data(ls_uom) with key uom = ip_unitofmeasure binary search.
       lv_value_c = |{ ip_value decimals = ls_uom-dec }|.
     else.
@@ -1374,7 +1374,7 @@ class zcl_excel_common implementation.
 
 
   method split_file.
-types: ty_text255 type c length 255.
+    types: ty_text255 type c length 255.
     data: lt_hlp type table of ty_text255,
           ls_hlp type ty_text255.
 

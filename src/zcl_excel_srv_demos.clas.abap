@@ -27,16 +27,33 @@ endclass.
 
 class zcl_excel_srv_demos implementation.
   method if_http_service_extension~handle_request.
-    data lv_xlsx type ref to zcl_excel.
-    data lv_html type string.
+    types ty_numc3 type n length 3.
+    types ty_charn3 type c length 3.
+    data lv_xlsx           type ref to zcl_excel.
+    data lv_html           type string.
+    data LO_text_attribute type ref to cl_xco_tp_text_attribute.
+    data lo_language       type ref to if_xco_language.
+    data lo_translation    type ref to if_xco_i18n_translation.
+
+    lo_text_attribute = xco_cp_text_pool=>text_attribute->text_element_text.
+    lo_language = xco_cp=>language( 'E' ).
 
     data(lv_demo) = request->get_form_field( 'DEMO' ).
     case lv_demo.
       when space.
-        lv_html = |<html><head><title>Excel Demos</title></head><body><ul>|.
+        lv_html = |<html><head><title>Excel Demos</title><style>body \{ font-size: 20px; \}</style></head><body><ul>|.
         do 12 times.
-          lv_html = lv_html &&
-          |<li><a href="/sap/bc/http/sap/ZSRV_EXCEL_DEMOS?DEMO=DEMO{ sy-index }" target="_blank">Demo{ sy-index }</a></li>|.
+          lo_translation = xco_cp_i18n=>target->text_pool->class_text_symbol( iv_class_name     = 'ZCL_EXCEL_SRV_DEMOS'
+                                                                              iv_text_symbol_id = conv ty_charn3( conv ty_numc3( sy-index ) ) )->get_translation(
+                                                                                  io_language        = lo_language
+                                                                                  it_text_attributes = value #( ( lo_text_attribute ) ) ).
+          read table lo_translation->texts into data(lo_text) index 1.
+          if sy-subrc eq 0.
+            lv_html = lv_html &&
+                |<li><a href="/sap/bc/http/sap/ZSRV_EXCEL_DEMOS?DEMO=DEMO{ sy-index }" target="_blank">Demo{ sy-index }</a>: {
+                lo_text_attribute->if_xco_i18n_text_attribute~get_string_for_text( lo_text->value )
+                 }</li>|.
+          endif.
         enddo.
         lv_html = |{ lv_html }</ul></body></html>|.
         response->set_text( lv_html ).
@@ -46,6 +63,8 @@ class zcl_excel_srv_demos implementation.
               receiving
                 ro_excel = lv_xlsx.
             response->set_binary( write( lv_xlsx ) ).
+            response->set_header_field( i_name  = 'Content-Disposition'
+                                        i_value = |attachment; filename="{ lv_demo }.xlsx"| ).
             response->set_content_type( 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ).
           catch cx_root.
         endtry.
@@ -869,25 +888,58 @@ class zcl_excel_srv_demos implementation.
             amnt     type dmbtr,
             currn    type waers,
           end of ls_out,
-          lt_out           like standard table of ls_out,
-          lt_field_catalog type zif_excel_data_decl=>zexcel_t_fieldcatalog.
+          lt_out like standard table of ls_out.
+    data lt_field_catalog type zif_excel_data_decl=>zexcel_t_fieldcatalog.
+
+    data: begin of ls_mat,
+            material type matnr,
+            mattext  type string,
+          end of ls_mat,
+          lt_mat like standard table of ls_mat.
+    data lt_uoms      type standard table of zcl_excel_Common=>ty_uom.
+    data lt_currs     type standard table of zcl_excel_common=>ty_curr.
 
     data lo_worksheet type ref to zcl_excel_worksheet.
+
     ro_excel = new #( ).
 
-    " Get active sheet
     lo_worksheet = ro_excel->get_active_worksheet( ).
-    lt_out = value #(
-      ( material = '897234' mattext = 'Aether-Glass' qnty = '12.768' meins = 'ST' amnt = '1233.23' currn = 'USD' )
-      ( material = '892234' mattext = 'Obsidian-Silk' qnty = '12.768' meins = 'KGM' amnt = '1233.23' currn = 'JPY' )
-      ( material = '837234' mattext = 'Ferro-Gel' qnty = '12.768' meins = 'DGP' amnt = '-1233.23' currn = 'BHD' )
-      ( material = '117234' mattext = 'Neon-Quartz' qnty = '12.768' meins = 'KGM' amnt = '1233.23' currn = 'USD' )
-      ( material = '297234' mattext = 'Cryo-Ceramic' qnty = '12.768' meins = 'DGP' amnt = '1233.23' currn = 'JPY' )
-      ( material = '837234' mattext = 'Vapor-Steel' qnty = '12.768' meins = 'KGM' amnt = '-1233.23' currn = 'JPY' )
-      ( material = '847234' mattext = 'Mycelium-Brass' qnty = '12.768' meins = 'ST' amnt = '1233.23' currn = 'BHD' )
-      ( material = '896234' mattext = 'Void-Polymer' qnty = '12.768' meins = 'KGM' amnt = '1233.23' currn = 'USD' )
-      ( material = '897734' mattext = 'Plasma-Amber' qnty = '12.768' meins = 'DGP' amnt = '-1233.23' currn = 'CAD' )
-      ( material = '897284' mattext = 'Titan-Oak' qnty = '12.768' meins = '13' amnt = '1233.23' currn = 'CAD' ) ).
+
+    lt_currs = value #( ( curr = 'BHD' )
+                        ( curr = 'JPY' )
+                        ( curr = 'INR' )
+                        ( curr = 'CAD' ) ).
+    lt_uoms = value #( ( uom = 'KG' )
+                       ( uom = 'ST' )
+                       ( uom = 'DGP' )
+                       ( uom = 'EXR' ) ).
+
+    lt_mat = value #( ( material = '897234' mattext = 'Aether-Glass' )
+                      ( material = '892234' mattext = 'Obsidian-Silk' )
+                      ( material = '837234' mattext = 'Ferro-Gel' )
+                      ( material = '117234' mattext = 'Neon-Quartz' )
+                      ( material = '297234' mattext = 'Cryo-Ceramic' )
+                      ( material = '837234' mattext = 'Vapor-Steel' )
+                      ( material = '847234' mattext = 'Mycelium-Brass' )
+                      ( material = '896234' mattext = 'Void-Polymer' )
+                      ( material = '897734' mattext = 'Plasma-Amber' )
+                      ( material = '897284' mattext = 'Titan-Oak' )  ).
+
+    data(lo_rand_int) = cl_abap_random_int=>create( seed = conv i( cl_abap_context_info=>get_system_time( ) )
+                                                    min  = 1
+                                                    max  = lines( lt_mat ) ).
+    loop at lt_uoms into data(ls_uom).
+      loop at lt_currs into data(ls_curr).
+        read table lt_mat into ls_mat index lo_rand_int->get_next( ).
+        append value #( qnty     = '98.765'
+                        amnt     = '12345.67'
+                        material = ls_mat-material
+                        mattext  = ls_mat-mattext
+                        meins    = ls_uom-uom
+                        currn    = ls_curr-curr ) to lt_out.
+      endloop.
+    endloop.
+
     lt_field_catalog = zcl_excel_common=>get_fieldcatalog( ip_table = lt_out ).
     lt_field_catalog[ fieldname = 'AMNT' ]-currency_column = 'CURRN'.
     lt_field_catalog[ fieldname = 'QNTY' ]-unit_column = 'MEINS'.
@@ -895,13 +947,12 @@ class zcl_excel_srv_demos implementation.
     delete lt_field_catalog where fieldname = 'CURRN' or fieldname = 'MEINS' or fieldname = 'MATTEXT'.
 
     lo_worksheet->bind_table( ip_table          = lt_out
-                              it_field_catalog = lt_field_catalog
+                              it_field_catalog  = lt_field_catalog
                               is_table_settings = value zif_excel_data_decl=>zexcel_s_table_settings(
                                                             table_name       = 'MyDataTable'
                                                             top_left_column  = 'A'
                                                             top_left_row     = 1
-                                                            show_row_stripes = abap_true
-                                                             ) ).
+                                                            show_row_stripes = abap_true ) ).
 
     do lo_worksheet->get_highest_column( ) times.
       lo_worksheet->get_column( zcl_excel_common=>convert_column2alpha( sy-index ) )->set_auto_size( abap_true ).
@@ -1047,7 +1098,7 @@ class zcl_excel_srv_demos implementation.
              material            type string,
              total_order_qty     type i,
              total_fulfilled_qty type i,
-             quantity_unit      type string,
+             quantity_unit       type string,
              total_sales_value   type p length 12 decimals 2,
              currency            type waers,
            end of ty_sales_summary.
