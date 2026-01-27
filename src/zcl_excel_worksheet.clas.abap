@@ -460,6 +460,13 @@ class zcl_excel_worksheet definition
         value(rp_is_merged) type abap_bool
       raising
         zcx_excel .
+    methods unitcurr_formatting
+      importing !ip_dec             type i
+                !ip_unitlen         type i
+                !ip_unit            type string
+                !ip_maxdec          type i
+                !ip_curr_uom_incell type abap_bool
+      returning value(rv_format)    type string.
     methods set_cell
       importing
         !ip_columnrow         type csequence optional
@@ -472,6 +479,8 @@ class zcl_excel_worksheet definition
         !ip_data_type         type zif_excel_data_decl=>zexcel_cell_data_type optional
         !ip_abap_type         type abap_typekind optional
         !ip_curr_uom_incell   type abap_boolean default abap_true
+        !ip_maxdec            type i default 0
+        !ip_unitlen           type i default 0
         !ip_currency          type waers_curc optional
         !ip_textvalue         type csequence optional
         !ip_unitofmeasure     type meins optional
@@ -903,6 +912,17 @@ class zcl_excel_worksheet implementation.
     data lt_other_table_settings type ty_table_settings.
     data ls_column_formula       type mty_s_column_formula.
     data lv_mincol               type i.
+    data: begin of ls_coldec,
+            columnname type string,
+            maxdec     type i,
+          end of ls_coldec,
+          lt_coldec like standard table of ls_coldec,
+
+          begin of ls_unitlen,
+            columnname type string,
+            maxlen     type i,
+          end of ls_unitlen,
+          lt_unitlen like standard table of ls_unitlen.
 
     field-symbols <ls_field_catalog>   type zif_excel_data_decl=>zexcel_s_fieldcatalog.
     field-symbols <fs_table_line>      type any.
@@ -964,6 +984,43 @@ class zcl_excel_worksheet implementation.
     lt_field_catalog = normalize_column_heading_texts( iv_default_descr = iv_default_descr
                                                        it_field_catalog = lt_field_catalog ).
 
+    loop at lt_field_catalog assigning <ls_field_catalog> where unit_column is not initial or currency_column is not initial.
+      append initial line to lt_coldec assigning field-symbol(<coldec>).
+      <coldec>-columnname = <ls_field_catalog>-fieldname.
+
+      if <ls_field_catalog>-unit_column is not initial.
+        append initial line to lt_unitlen assigning field-symbol(<unitlen>).
+        <unitlen>-columnname = <ls_field_catalog>-fieldname.
+      endif.
+
+      loop at ip_table assigning <fs_table_line>.
+        if <ls_field_catalog>-unit_column is not initial.
+          assign component <ls_field_catalog>-unit_column of structure <fs_table_line> to <fs_fldval>.
+          if <fs_fldval> is not initial.
+            read table zcl_excel_common=>lt_uoms into data(ls_uom) with key uom = <fs_fldval> binary search.
+            if sy-subrc eq 0.
+              if ls_uom-dec > <coldec>-maxdec.
+                <coldec>-maxdec = ls_uom-dec.
+              endif.
+              if strlen( ls_uom-uome ) > <unitlen>-maxlen.
+                <unitlen>-maxlen = strlen( ls_uom-uome ).
+              endif.
+            endif.
+          endif.
+        elseif <ls_field_catalog>-currency_column is not initial.
+          assign component <ls_field_catalog>-currency_column of structure <fs_table_line> to <fs_fldval>.
+          if <fs_fldval> is not initial.
+            read table zcl_excel_common=>lt_currs into data(ls_curr) with key curr = <fs_fldval> binary search.
+            if sy-subrc eq 0 and ls_curr-dec > <coldec>-maxdec.
+              <coldec>-maxdec = ls_curr-dec.
+            endif.
+          endif.
+        endif.
+      endloop.
+    endloop.
+    sort lt_coldec by columnname.
+    sort lt_unitlen by columnname.
+
     " It is better to loop column by column (only visible column)
     loop at lt_field_catalog assigning <ls_field_catalog>.
 
@@ -1005,6 +1062,16 @@ class zcl_excel_worksheet implementation.
       endif.
 
       lv_row_int += 1.
+
+      if <ls_field_catalog>-unit_column is not initial or <ls_field_catalog>-currency_column is not initial.
+        clear ls_coldec.
+        read table lt_coldec into ls_coldec with key columnname = <ls_field_catalog>-fieldname binary search.
+        if <ls_field_catalog>-unit_column is not initial.
+          clear ls_unitlen.
+          read table lt_unitlen into ls_unitlen with key columnname = <ls_field_catalog>-fieldname binary search.
+        endif.
+      endif.
+
       loop at ip_table assigning <fs_table_line>.
 
         assign component <ls_field_catalog>-fieldname of structure <fs_table_line> to <fs_fldval>.
@@ -1084,6 +1151,8 @@ class zcl_excel_worksheet implementation.
                         ip_abap_type     = <ls_field_catalog>-abap_type
                         ip_currency      = <fs_fldval_currency>
                         ip_unitofmeasure = <fs_fldval_uom>
+                        ip_maxdec        = ls_coldec-maxdec
+                        ip_unitlen       = ls_unitlen-maxlen
                         ip_textvalue     = <fs_fldval_text>
                         ip_style         = <ls_field_catalog>-style ).
             else.
@@ -1092,6 +1161,8 @@ class zcl_excel_worksheet implementation.
                         ip_value         = <fs_fldval>
                         ip_currency      = <fs_fldval_currency>
                         ip_unitofmeasure = <fs_fldval_uom>
+                        ip_maxdec        = ls_coldec-maxdec
+                        ip_unitlen       = ls_unitlen-maxlen
                         ip_textvalue     = <fs_fldval_text>
                         ip_style         = <ls_field_catalog>-style ).
             endif.
@@ -1102,6 +1173,8 @@ class zcl_excel_worksheet implementation.
                         ip_abap_type     = <ls_field_catalog>-abap_type
                         ip_currency      = <fs_fldval_currency>
                         ip_unitofmeasure = <fs_fldval_uom>
+                        ip_maxdec        = ls_coldec-maxdec
+                        ip_unitlen       = ls_unitlen-maxlen
                         ip_textvalue     = <fs_fldval_text>
                         ip_value         = <fs_fldval> ).
             else.
@@ -1109,6 +1182,8 @@ class zcl_excel_worksheet implementation.
                         ip_row           = lv_row_int
                         ip_currency      = <fs_fldval_currency>
                         ip_unitofmeasure = <fs_fldval_uom>
+                        ip_maxdec        = ls_coldec-maxdec
+                        ip_unitlen       = ls_unitlen-maxlen
                         ip_textvalue     = <fs_fldval_text>
                         ip_value         = <fs_fldval> ).
             endif.
@@ -3690,29 +3765,54 @@ class zcl_excel_worksheet implementation.
       clear lv_newformat.
       if ip_currency is not initial.
         read table zcl_excel_common=>lt_currs into data(ls_curr) with key curr = ip_currency binary search.
-        lv_newformat = |* #,##0| && cond string( when ls_curr-dec is not initial
-                                                 then '.' && repeat( val = '0'
-                                                                     occ = ls_curr-dec )
-                                                 else space )
-                                 && cond string( when ip_curr_uom_incell is not initial
-                                                 then |" { ip_currency }"| ).
-
+        lv_newformat = unitcurr_formatting( ip_dec             = conv #( ls_curr-dec )
+                                            ip_unitlen         = strlen( ip_currency )
+                                            ip_unit            = conv #( ip_currency )
+                                            ip_maxdec          = ip_maxdec
+                                            ip_curr_uom_incell = ip_curr_uom_incell ).
       elseif ip_unitofmeasure is not initial.
         read table zcl_excel_common=>lt_uoms into data(ls_uom) with key uom = ip_unitofmeasure binary search.
-        lv_newformat = |* #,##0| && cond string( when ls_uom-dec is not initial
-                                                 then '.' && repeat( val = '0'
-                                                                     occ = ls_uom-dec )
-                                                 else space )
-                                 && cond string( when ip_curr_uom_incell is not initial
-                                                 then |" { ls_uom-uome }"| ).
+        lv_newformat = unitcurr_formatting( ip_dec             = conv #( ls_uom-dec )
+                                            ip_unitlen         = ip_unitlen
+                                            ip_unit            = conv #( ls_uom-uome )
+                                            ip_maxdec          = ip_maxdec
+                                            ip_curr_uom_incell = ip_curr_uom_incell ).
       endif.
       if lv_newformat is not initial.
         change_cell_style( ip_column                    = lv_column
                            ip_row                       = lv_row
+                           ip_font                      = value #( name   = zcl_excel_style_font=>c_name_courier
+                                                                   family = zcl_excel_style_font=>c_family_modern
+                                                                   scheme = zcl_excel_style_font=>c_scheme_none
+                                                                   size   = 11 )
+                           ip_xfont                     = value #( name   = abap_true
+                                                                   family = abap_true
+                                                                   scheme = abap_true
+                                                                   size   = abap_true )
                            ip_number_format_format_code = lv_newformat ).
       endif.
     endif.
     " End of Fix issue #162
+  endmethod.
+
+  method unitcurr_formatting.
+    try.
+        rv_format = |* #,##0| && cond string( when ip_dec is not initial
+                                              then '.' && repeat( val = '0'
+                                                                  occ = ip_dec )
+                                              else space )
+                                 && cond string( when ip_dec <> ip_maxdec
+                                                 then repeat(
+                                                     val = ` `
+                                                     occ = ip_maxdec - ip_dec + cond #( when ip_maxdec > 0 and ip_dec = 0
+                                                                                        then 1
+                                                                                        else 0 ) ) )
+                                 && cond string( when ip_curr_uom_incell is not initial
+                                                 then |" { ip_unit }{ repeat(
+                                                                          val = ` `
+                                                                          occ = ip_unitlen - strlen( ip_unit ) ) }"| ).
+      catch cx_root.
+    endtry.
   endmethod.
 
 

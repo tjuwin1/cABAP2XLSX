@@ -55,7 +55,9 @@ class zcl_excel_font implementation.
     constants lc_excel_cell_padding type f value '0.75'.
     data:         ld_length                  type i.
     ld_length = strlen( iv_cell_value ).
-    rv_width = ld_length * iv_font_height / lc_default_font_height + lc_excel_cell_padding.
+    rv_width = ld_length * iv_font_height /
+               cond #( when iv_font_name = zcl_excel_style_font=>c_name_courier then 30 else lc_default_font_height )
+                + lc_excel_cell_padding.
     if rv_width < 12.
       rv_width = 12.
     endif.

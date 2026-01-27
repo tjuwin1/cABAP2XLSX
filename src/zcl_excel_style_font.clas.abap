@@ -16,6 +16,7 @@ CLASS zcl_excel_style_font DEFINITION
     CONSTANTS c_family_script type zif_excel_data_decl=>zexcel_style_font_family VALUE 4. "#EC NOTEXT
     CONSTANTS c_family_swiss type zif_excel_data_decl=>zexcel_style_font_family VALUE 2. "#EC NOTEXT
     CONSTANTS c_name_arial type zif_excel_data_decl=>zexcel_style_font_name VALUE 'Arial'. "#EC NOTEXT
+    CONSTANTS c_name_courier type zif_excel_data_decl=>zexcel_style_font_name VALUE 'Courier New'. "#EC NOTEXT
     CONSTANTS c_name_calibri type zif_excel_data_decl=>zexcel_style_font_name VALUE 'Calibri'. "#EC NOTEXT
     CONSTANTS c_name_cambria type zif_excel_data_decl=>zexcel_style_font_name VALUE 'Cambria'. "#EC NOTEXT
     CONSTANTS c_name_roman type zif_excel_data_decl=>zexcel_style_font_name VALUE 'Times New Roman'. "#EC NOTEXT
@@ -29,7 +30,7 @@ CLASS zcl_excel_style_font DEFINITION
     CONSTANTS c_underline_singleaccounting type zif_excel_data_decl=>zexcel_style_font_underline VALUE 'singleAccounting'. "#EC NOTEXT
     DATA family type zif_excel_data_decl=>zexcel_style_font_family VALUE 2. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  . " .
     DATA italic TYPE abap_boolean .
-    DATA name type zif_excel_data_decl=>zexcel_style_font_name VALUE 'Calibri'. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  . " .
+    DATA name type zif_excel_data_decl=>zexcel_style_font_name VALUE 'Calibri'."'Calibri'. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  . " .
     DATA scheme type zif_excel_data_decl=>zexcel_style_font_scheme VALUE 'minor'. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  . " .
     DATA size type zif_excel_data_decl=>zexcel_style_font_size VALUE 11. "#EC NOTEXT .  .  .  .  .  .  .  .  .  .  .  . " .
     DATA strikethrough TYPE abap_boolean .
