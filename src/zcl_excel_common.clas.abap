@@ -870,8 +870,7 @@ class zcl_excel_common implementation.
       assign component wa_component-name of structure i_source  to <attribute>.
       if sy-subrc <> 0.
 * not - then it is an attribute of the class - use different assign then
-        concatenate 'i_source->' wa_component-name into attribute_name.
-        assign (attribute_name) to <attribute>.
+        assign i_source->(wa_component-name) to <attribute>.
         if sy-subrc <> 0.
           exit.
         endif.  " Should not happen if structure is built properly - otherwise just exit to create no dumps
@@ -923,8 +922,7 @@ class zcl_excel_common implementation.
       assign component wa_component-name of structure e_target  to <attribute>.
       if sy-subrc <> 0.
 * not - then it is an attribute of the class - use different assign then
-        concatenate 'E_TARGET->' wa_component-name into attribute_name.
-        assign (attribute_name) to <attribute>.
+        assign e_target->(wa_component-name) to <attribute>.
         if sy-subrc <> 0.exit.endif.  " Should not happen if structure is built properly - otherwise just exit to create no dumps
         flag_class = abap_true.
       endif.
